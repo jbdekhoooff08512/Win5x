@@ -276,6 +276,38 @@ install_postgresql() {
         run_command "sudo systemctl enable postgresql" "PostgreSQL service enable"
     else
         log_info "PostgreSQL already installed"
+        
+        # Check if PostgreSQL is running
+        if sudo systemctl is-active --quiet postgresql; then
+            log_info "PostgreSQL is already running"
+        else
+            log_warning "PostgreSQL is installed but not running. Starting service..."
+            run_command "sudo systemctl start postgresql" "PostgreSQL service start"
+            run_command "sudo systemctl enable postgresql" "PostgreSQL service enable"
+        fi
+        
+        # Test PostgreSQL connection
+        if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
+            log_success "PostgreSQL connection test successful"
+        else
+            log_error "PostgreSQL connection test failed"
+            log_info "Trying to restart PostgreSQL service..."
+            run_command "sudo systemctl restart postgresql" "PostgreSQL service restart"
+            
+            # Wait a moment for service to start
+            sleep 3
+            
+            # Test connection again
+            if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
+                log_success "PostgreSQL connection test successful after restart"
+            else
+                log_error "PostgreSQL is still not responding. Please check the service manually."
+                log_info "Run these commands to troubleshoot:"
+                log_info "sudo systemctl status postgresql"
+                log_info "sudo journalctl -u postgresql"
+                exit 1
+            fi
+        fi
     fi
     
     log_success "PostgreSQL installed and configured"
@@ -387,6 +419,16 @@ setup_database() {
     
     local db_name="win5x_db"
     local db_user="win5x_user"
+    
+    # Test PostgreSQL connection first
+    if ! sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
+        log_error "Cannot connect to PostgreSQL. Please ensure PostgreSQL is running."
+        log_info "Run these commands to fix PostgreSQL:"
+        log_info "sudo systemctl start postgresql"
+        log_info "sudo systemctl enable postgresql"
+        log_info "sudo systemctl status postgresql"
+        exit 1
+    fi
     
     # Check if database exists
     if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
