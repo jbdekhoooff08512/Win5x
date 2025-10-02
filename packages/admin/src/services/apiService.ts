@@ -6,7 +6,6 @@ import {
   Transaction, 
   AnalyticsData,
   PaginatedResponse,
-  GameConfig,
   API_ENDPOINTS
 } from '@win5x/common';
 
@@ -278,6 +277,24 @@ export const apiService = {
     return response.data.data;
   },
 
+  // Referral Management
+  async getReferralConfig() {
+    const response = await api.get('/api/admin/referral/config');
+    return response.data.data;
+  },
+  async updateReferralConfig(data: { referralTiers: any[] }) {
+    const response = await api.post('/api/admin/referral/config', data);
+    return response.data.data;
+  },
+  async getReferralStats(params: { period?: string } = {}) {
+    const response = await api.get('/api/admin/referral/stats', { params });
+    return response.data.data;
+  },
+  async getReferralRecords(params: { page?: number; limit?: number; search?: string; referrerId?: string } = {}) {
+    const response = await api.get('/api/admin/referral/records', { params });
+    return response.data.data;
+  },
+
   // User wallets (admin view)
   async getUserWallets(userId: string) {
     const response = await api.get(`/api/admin/wallets/${userId}`);
@@ -293,13 +310,13 @@ export const apiService = {
     return response.data.data as { userId: string; delta: number; coins: number };
   },
 
-  // Referral System (admin view)
-  async getReferralStats(userId: string) {
+  // Referral System (admin view) - User specific
+  async getUserReferralStats(userId: string) {
     const response = await api.get(`/api/admin/referral/stats/${userId}`);
     return response.data.data;
   },
 
-  async getReferralRecords(userId: string, params: { page?: number; limit?: number } = {}) {
+  async getUserReferralRecords(userId: string, params: { page?: number; limit?: number } = {}) {
     const response = await api.get(`/api/admin/referral/records/${userId}`, { params });
     return response.data.data;
   },

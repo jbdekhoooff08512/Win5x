@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { SOCKET_EVENTS } from '@win5x/common';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -17,6 +18,7 @@ interface SocketProviderProps {
 
 export function SocketProvider({ children }: SocketProviderProps) {
   const { user, tokens } = useAuth();
+  const queryClient = useQueryClient();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [hasShownConnectToast, setHasShownConnectToast] = useState<boolean>(() => {
@@ -98,6 +100,15 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     newSocket.on('connected', (data) => {
       console.log('Socket authenticated:', data);
+    });
+
+    // Handle referral config updates
+    newSocket.on('referral_config_updated', (data) => {
+      console.log('Referral config updated:', data);
+      toast.success('Referral system updated!');
+      // Invalidate referral queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['referralStats'] });
+      queryClient.invalidateQueries({ queryKey: ['referralRecords'] });
     });
 
     setSocket(newSocket);

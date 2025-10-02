@@ -85,6 +85,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Feedback', href: '/feedbacks', icon: FileText, permission: 'MANAGE_USERS' },
     { name: 'Promotions', href: '/promotions', icon: FileText, permission: 'VIEW_ANALYTICS' },
     { name: 'Gift Codes', href: '/gift-codes', icon: FileText, permission: 'MANAGE_USERS' },
+    { name: 'Referrals', href: '/referrals', icon: Users, permission: 'MANAGE_USERS' },
     { name: 'About', href: '/about', icon: FileText, permission: null },
   ];
 

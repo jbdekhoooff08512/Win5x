@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { WAGERING_CONFIG } from '@win5x/common';
 import { logger } from '../utils/logger';
 import { WalletService } from './WalletService';
 
@@ -247,7 +248,7 @@ export class PaymentService {
     // Capture starting balance for detailed logging
     const beforeBalanceUser = await this.prisma.user.findUnique({ where: { id: deposit.userId }, select: { walletBetting: true } });
 
-    // Update deposit status and credit user balance
+    // Update deposit status and credit user balance with wagering requirement
     const [updatedDeposit, afterUser, depositTx] = await this.prisma.$transaction([
       this.prisma.depositRequest.update({
         where: { id: depositId },
@@ -262,6 +263,8 @@ export class PaymentService {
         where: { id: deposit.userId },
         data: {
           walletBetting: { increment: deposit.amount },
+          // Set wagering requirement: 5x the deposit amount
+          wageringRequired: { increment: deposit.amount * WAGERING_CONFIG.DEPOSIT_MULTIPLIER },
         },
       }),
       this.prisma.transaction.create({

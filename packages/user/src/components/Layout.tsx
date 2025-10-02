@@ -9,11 +9,13 @@ import {
   Menu,
   X,
   Wallet,
-  History
+  History,
+  Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
+import { useBettingWarning } from '../contexts/BettingWarningContext';
 import { formatCurrency } from '@win5x/common';
 import { getAvatarById, DEFAULT_AVATAR } from '../assets/avatars';
 
@@ -24,6 +26,11 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const { isConnected } = useSocket();
+  const { 
+    hasActiveBets, 
+    setShowWarning, 
+    setPendingNavigation 
+  } = useBettingWarning();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const showConnectionStatus = location.pathname === '/game';
@@ -33,6 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Transactions', href: '/transactions', icon: CreditCard },
     { name: 'Betting History', href: '/betting-history', icon: History },
+    { name: 'Log Section', href: '/logs', icon: Clock },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
     { name: 'Invite & Earn', href: '/invite-earn', icon: Trophy },
     // Service links (also available from Profile page)
@@ -156,6 +164,27 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ navigation, currentPath, user, onNavigate }) => {
+  const { 
+    hasActiveBets, 
+    setShowWarning, 
+    setPendingNavigation 
+  } = useBettingWarning();
+
+  const handleNavigation = (href: string, e: React.MouseEvent) => {
+    // If user has active bets and is trying to navigate away from game page
+    if (hasActiveBets && currentPath === '/game' && href !== '/game') {
+      e.preventDefault();
+      setPendingNavigation(href);
+      setShowWarning(true);
+      return;
+    }
+    
+    // Normal navigation
+    onNavigate && onNavigate();
+    e.preventDefault();
+    window.location.assign(href);
+  };
+
   return (
     <div className="flex flex-col flex-grow bg-gray-800 pt-5 pb-4 overflow-y-auto border-r border-gray-700">
       <div className="flex items-center flex-shrink-0 px-4">
@@ -179,11 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, currentPath, user, onNavi
                     : 'text-gray-200 hover:bg-gray-700 hover:text-white'
                 }`}
                 onClick={(e) => {
-                  // Close sidebar if needed
-                  onNavigate && onNavigate();
-                  // Force instant page refresh navigation for snappy feedback
-                  e.preventDefault();
-                  window.location.assign(item.href);
+                  handleNavigation(item.href, e);
                 }}
               >
                 <item.icon

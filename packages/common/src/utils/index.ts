@@ -31,30 +31,65 @@ export function calculateCashbackAmount(betAmount: number): number {
   return parseFloat((betAmount * 0.10).toFixed(2));
 }
 
-export function determineLeastChosenNumber(betDistribution: Record<string, number>): number {
-  // Check if all numbers have bets (non-zero amounts)
-  const numbersWithBets = Object.values(betDistribution).filter(amount => amount > 0);
-  const totalNumbers = Object.keys(betDistribution).length;
+/**
+ * Admin-safe winner determination function
+ * @param bets - Array or object of bet amounts for numbers 0-9
+ * @returns The winning number (0-9)
+ */
+export function get_winner(bets: number[] | Record<string, number>): number {
+  // Convert to array format if object is provided
+  let betArray: number[];
   
-  // If all numbers have bets, choose the one with least amount
-  if (numbersWithBets.length === totalNumbers) {
-    let minNumber = 0;
-    let minAmount = betDistribution['0'] || 0;
-    for (let i = 1; i <= 9; i++) {
-      const amt = betDistribution[i.toString()] || 0;
-      if (amt < minAmount) {
-        minAmount = amt;
-        minNumber = i;
-      }
+  if (Array.isArray(bets)) {
+    betArray = bets;
+  } else {
+    // Convert object to array (assuming keys are '0', '1', ..., '9')
+    betArray = [];
+    for (let i = 0; i <= 9; i++) {
+      betArray[i] = bets[i.toString()] || 0;
     }
-    return minNumber;
   }
   
-  // If some numbers have no bets, choose randomly from all numbers
-  // This prevents users from exploiting the pattern
-  const allNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-  const randomIndex = Math.floor(Math.random() * allNumbers.length);
-  return allNumbers[randomIndex];
+  // Validate input size
+  if (betArray.length !== 10) {
+    throw new Error('Bets array must have exactly 10 elements (indexes 0-9)');
+  }
+  
+  // Rule 1: If all bet amounts are zero → return a random number between 0–9
+  const allZero = betArray.every(amount => amount === 0);
+  if (allZero) {
+    return Math.floor(Math.random() * 10);
+  }
+  
+  // Rule 2-5: Find the number with the lowest bet amount
+  let minAmount = betArray[0];
+  let winner = 0;
+  
+  for (let i = 1; i < 10; i++) {
+    if (betArray[i] < minAmount) {
+      minAmount = betArray[i];
+      winner = i;
+    }
+  }
+  
+  // Check if all amounts are equal (constant betting)
+  const allEqual = betArray.every(amount => amount === minAmount);
+  if (allEqual) {
+    // If all amounts are equal, return a random number for fairness
+    return Math.floor(Math.random() * 10);
+  }
+  
+  return winner;
+}
+
+export function determineLeastChosenNumber(betDistribution: Record<string, number>): number {
+  // Convert to array format for get_winner function
+  const betArray: number[] = [];
+  for (let i = 0; i <= 9; i++) {
+    betArray[i] = betDistribution[i.toString()] || 0;
+  }
+  
+  return get_winner(betArray);
 }
 
 // Time Utilities

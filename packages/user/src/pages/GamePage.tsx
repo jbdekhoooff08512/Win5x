@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
+import { useBettingWarning } from '../contexts/BettingWarningContext';
 import { gameService } from '../services/gameService';
 import GameWheel from '../components/GameWheel';
 import BettingChips from '../components/BettingChips';
@@ -15,12 +16,18 @@ import ActivityBooster from '../components/ActivityBooster';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TotalBetDisplay from '../components/TotalBetDisplay';
 import ChipSelector from '../components/ChipSelector';
+import BettingWarningModal from '../components/BettingWarningModal';
 import { formatCurrency, GAME_CONFIG, expandBet, BET_TYPES } from '@win5x/common';
 import { calculateIndividualBetAmounts } from '../utils/betCalculations';
 
 const GamePage: React.FC = () => {
   const { user, logout, setUser } = useAuth();
   const { socket, isConnected } = useSocket();
+  const { 
+    setHasActiveBets, 
+    setCurrentRoundId, 
+    resetBettingState 
+  } = useBettingWarning();
   
   // Game state
   const [selectedChip, setSelectedChip] = useState(20);
@@ -91,7 +98,14 @@ const GamePage: React.FC = () => {
         setSelectedChip(20);
         // Reset UI bets strictly at round change
         setUiBets({});
+        // Reset betting warning state for new round
+        resetBettingState();
         lastRoundIdRef.current = incomingRoundId;
+      }
+      
+      // Update current round ID in betting warning context
+      if (incomingRoundId) {
+        setCurrentRoundId(incomingRoundId);
       }
       
       setPreviousRoundId(incomingRoundId);
@@ -315,6 +329,9 @@ const GamePage: React.FC = () => {
       // Update UI bets immediately for UX
       setUiBets(prev => ({ ...prev, [betKey]: currentAmount + selectedChip }));
 
+      // Track that user has active bets for warning system
+      setHasActiveBets(true);
+
     } catch (error) {
       console.error('Failed to place bet:', error);
     }
@@ -461,6 +478,25 @@ const GamePage: React.FC = () => {
                 {formatCurrency(user?.walletGaming ?? 0)}
               </div>
             </div>
+            
+            {/* Wagering Progress */}
+            {(user?.wageringRequired ?? 0) > 0 && (
+              <div className="text-right">
+                <div className="text-xs sm:text-sm text-gray-400">Wagering</div>
+                <div className="text-xs sm:text-sm font-bold text-blue-400">
+                  {formatCurrency(user?.wageringProgress ?? 0)}/{formatCurrency(user?.wageringRequired ?? 0)}
+                </div>
+                <div className="w-16 bg-gray-700 rounded-full h-1 mt-1">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min(100, ((user?.wageringProgress ?? 0) / (user?.wageringRequired ?? 1)) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
             <button
               onClick={() => logout()}
               className="px-2 sm:px-3 py-1 sm:py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm rounded font-semibold transition-colors"
@@ -658,6 +694,9 @@ const GamePage: React.FC = () => {
       )}
 
       {/* Removed modal to avoid duplicate notifications */}
+      
+      {/* Betting Warning Modal */}
+      <BettingWarningModal />
     </div>
   );
 };

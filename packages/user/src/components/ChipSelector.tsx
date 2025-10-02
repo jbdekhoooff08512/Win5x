@@ -57,15 +57,9 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
     setCustomAmount(value);
     setCustomError(validateCustomAmount(value));
     
-    // If user is typing, mark as custom selected and update selected chip
-    if (value) {
-      const numValue = parseInt(value);
-      if (!isNaN(numValue) && numValue >= GAME_CONFIG.minBet && numValue <= GAME_CONFIG.maxBet) {
-        setIsCustomSelected(true);
-        onChipSelect(numValue);
-      }
-    }
-  }, [validateCustomAmount, onChipSelect]);
+    // Don't automatically select chip while typing - wait for Select button click
+    // This prevents interference with the betting flow
+  }, [validateCustomAmount]);
 
   // Handle predefined chip selection
   const handlePredefinedChipClick = useCallback((chip: number) => {
@@ -93,11 +87,11 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
     onChipSelect(numValue);
     setIsCustomSelected(true);
     
-    // Place the bet if onPlaceBet is provided
-    if (onPlaceBet) {
-      onPlaceBet(numValue);
-    }
-  }, [customAmount, validateCustomAmount, onChipSelect, onPlaceBet]);
+    // Clear the input after successful selection
+    setCustomAmount('');
+    setCustomError('');
+    setIsCustomSelected(false);
+  }, [customAmount, validateCustomAmount, onChipSelect]);
 
   // Handle input focus
   const handleCustomFocus = useCallback(() => {
@@ -114,14 +108,15 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
     const isCustom = !predefinedChips.includes(selectedChip);
     setIsCustomSelected(isCustom);
     
-    if (isCustom && selectedChip > 0) {
+    // Only update custom amount if it's not currently being typed
+    if (isCustom && selectedChip > 0 && !isCustomFocused) {
       setCustomAmount(selectedChip.toString());
       setCustomError('');
-    } else if (!isCustom) {
+    } else if (!isCustom && !isCustomFocused) {
       setCustomAmount('');
       setCustomError('');
     }
-  }, [selectedChip]);
+  }, [selectedChip, isCustomFocused]);
 
   // Clear custom input when predefined chip is selected
   useEffect(() => {
@@ -191,7 +186,7 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
             )}
           </div>
           
-          {/* Bet Button */}
+          {/* Select Button */}
           <motion.button
             onClick={handleCustomBetClick}
             disabled={disabled || !isCustomValid}
@@ -203,7 +198,7 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
             whileHover={{ scale: disabled || !isCustomValid ? 1 : 1.05 }}
             whileTap={{ scale: disabled || !isCustomValid ? 1 : 0.95 }}
           >
-            Bet
+            Select
           </motion.button>
         </div>
         
@@ -225,7 +220,7 @@ const ChipSelector: React.FC<ChipSelectorProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="text-xs text-gold-400 text-center"
           >
-            Custom amount selected: ₹{parseInt(customAmount).toLocaleString()}
+            Custom chip selected: ₹{parseInt(customAmount).toLocaleString()}
           </motion.div>
         )}
       </div>

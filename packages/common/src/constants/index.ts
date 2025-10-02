@@ -6,7 +6,7 @@ export const GAME_CONFIG = {
   DEFAULT_RESULT_DURATION: 9, // seconds - Display results (8-10 seconds)
   DEFAULT_TRANSITION_DURATION: 3, // seconds - Transition to new round (2-5 seconds)
   MIN_BET_AMOUNT: 10,
-  MAX_BET_AMOUNT: 10000,
+  MAX_BET_AMOUNT: 5000,
   PAYOUT_MULTIPLIER: 5,
   CASHBACK_PERCENTAGE: 10,
   MAX_EXPOSURE_MULTIPLIER: 100, // Max exposure as multiplier of max bet
@@ -16,6 +16,15 @@ export const GAME_CONFIG = {
   payoutMultiplier: 5,
   minBet: 10,
   maxBet: 5000,
+} as const;
+
+// Wagering Configuration
+export const WAGERING_CONFIG = {
+  DEPOSIT_MULTIPLIER: 5, // Deposit amount × 5 = wagering requirement
+  MIN_WAGERING_AMOUNT: 0, // Minimum wagering amount (can be 0)
+  MAX_WAGERING_AMOUNT: 100000, // Maximum wagering amount cap
+  ENABLE_WAGERING: true, // Enable/disable wagering system
+  WAGERING_DESCRIPTION: 'You need to wager 5x your deposit amount before withdrawal',
 } as const;
 
 // Game Phase Enum
@@ -149,7 +158,7 @@ export const VALIDATION_RULES = {
   },
   BET_AMOUNT: {
     MIN: 10,
-    MAX: 10000,
+    MAX: 5000,
   },
 } as const;
 

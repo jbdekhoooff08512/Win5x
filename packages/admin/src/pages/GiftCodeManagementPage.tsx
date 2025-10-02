@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Copy, Check } from 'lucide-react';
+import { Plus, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiService } from '../services/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';

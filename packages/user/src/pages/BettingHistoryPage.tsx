@@ -7,9 +7,8 @@ import { userService } from '../services/userService';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface TotalGameHistoryItem {
-  round: number;
+  roundNumber: number;
   winningNumber: number;
-  result: string;
   time: Date;
 }
 
@@ -272,7 +271,6 @@ const BettingHistoryPage: React.FC = () => {
                       <tr className="border-b border-gray-700">
                         <th className="text-left py-3 px-4 text-gray-400 font-medium">Round</th>
                         <th className="text-center py-3 px-4 text-gray-400 font-medium">Winning Number</th>
-                        <th className="text-center py-3 px-4 text-gray-400 font-medium">Result</th>
                         <th className="text-right py-3 px-4 text-gray-400 font-medium">Time</th>
                       </tr>
                     </thead>
@@ -287,15 +285,6 @@ const BettingHistoryPage: React.FC = () => {
                             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold-500 text-black font-bold text-lg">
                               {game.winningNumber}
                             </div>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              game.result === 'Odd' 
-                                ? 'bg-blue-900/30 text-blue-400 border border-blue-500/30' 
-                                : 'bg-red-900/30 text-red-400 border border-red-500/30'
-                            }`}>
-                              {game.result}
-                            </span>
                           </td>
                           <td className="py-3 px-4 text-right text-gray-400 text-sm">
                             {formatTimeAgo(new Date(game.time))}

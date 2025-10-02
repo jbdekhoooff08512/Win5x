@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { 
   QrCode, 
-  Edit3, 
   CheckCircle, 
   XCircle, 
   Clock, 
@@ -33,11 +32,11 @@ const PaymentManagementPage: React.FC = () => {
     refetchInterval: 30000,
   });
 
-  const { data: paymentOptions, isLoading: optionsLoading } = useQuery({
-    queryKey: ['payment-options'],
-    queryFn: () => apiService.getPaymentOptions(),
-    refetchInterval: 30000,
-  });
+  // const { data: paymentOptions, isLoading: optionsLoading } = useQuery({
+  //   queryKey: ['payment-options'],
+  //   queryFn: () => apiService.getPaymentOptions(),
+  //   refetchInterval: 30000,
+  // });
 
   const { data: deposits, isLoading: depositsLoading } = useQuery({
     queryKey: ['admin-deposits'],
@@ -146,7 +145,7 @@ const PaymentManagementPage: React.FC = () => {
 
   const handleQrImageUpload = async (methodId: string, file: File) => {
     try {
-      const result = await apiService.uploadQrCode(methodId, file);
+      await apiService.uploadQrCode(methodId, file);
       toast.success('QR code uploaded successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-payment-methods'] });
     } catch (error: any) {

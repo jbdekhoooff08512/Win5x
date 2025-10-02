@@ -376,15 +376,20 @@ export class GameEngine extends EventEmitter {
           });
         }
 
-        // Update wagering progress: user must wager bonus amount before withdrawal
+        // Update wagering progress: user must wager amount before withdrawal
+        // This applies to all bets regardless of win/loss
         try {
           await this.prisma.user.update({
             where: { id: bet.userId },
-            data: ({
+            data: {
               wageringProgress: { increment: bet.amount },
-            } as any),
+            },
           });
-        } catch {}
+          
+          logger.info(`Wagering progress updated: User ${bet.userId} wagered ₹${bet.amount}`);
+        } catch (error) {
+          logger.error(`Failed to update wagering progress for user ${bet.userId}:`, error);
+        }
 
         // Credit referral earnings based on wager amount
         try {

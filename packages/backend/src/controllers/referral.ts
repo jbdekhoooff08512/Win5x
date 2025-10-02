@@ -14,21 +14,62 @@ import {
 const router: Router = Router();
 const prisma = new PrismaClient();
 
-// Referral bonus tiers - exactly as specified
-const REFERRAL_BONUS_TIERS = [
-  { id: 1, reward: 58, invitees: 2, depositPerPerson: 200 },
-  { id: 2, reward: 188, invitees: 4, depositPerPerson: 200 },
-  { id: 3, reward: 338, invitees: 10, depositPerPerson: 500 }, // Updated to ₹338 as specified
-  { id: 4, reward: 1678, invitees: 30, depositPerPerson: 800 },
-  { id: 5, reward: 2678, invitees: 50, depositPerPerson: 1200 },
-  { id: 6, reward: 3678, invitees: 75, depositPerPerson: 1200 },
-  { id: 7, reward: 6678, invitees: 100, depositPerPerson: 1200 },
-  { id: 8, reward: 11678, invitees: 200, depositPerPerson: 1200 },
-  { id: 9, reward: 27678, invitees: 500, depositPerPerson: 1200 },
-  { id: 10, reward: 55678, invitees: 1000, depositPerPerson: 1200 },
-  { id: 11, reward: 111678, invitees: 2000, depositPerPerson: 1200 },
-  { id: 12, reward: 266678, invitees: 5000, depositPerPerson: 1200 },
-];
+// Get referral bonus tiers from database or use defaults
+async function getReferralBonusTiers() {
+  try {
+    const config = await prisma.adminConfig.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const defaultTiers = [
+      { id: 1, reward: 58, invitees: 2, depositPerPerson: 200 },
+      { id: 2, reward: 188, invitees: 4, depositPerPerson: 200 },
+      { id: 3, reward: 338, invitees: 10, depositPerPerson: 500 },
+      { id: 4, reward: 1678, invitees: 30, depositPerPerson: 800 },
+      { id: 5, reward: 2678, invitees: 50, depositPerPerson: 1200 },
+      { id: 6, reward: 3678, invitees: 75, depositPerPerson: 1200 },
+      { id: 7, reward: 6678, invitees: 100, depositPerPerson: 1200 },
+      { id: 8, reward: 11678, invitees: 200, depositPerPerson: 1200 },
+      { id: 9, reward: 27678, invitees: 500, depositPerPerson: 1200 },
+      { id: 10, reward: 55678, invitees: 1000, depositPerPerson: 1200 },
+      { id: 11, reward: 111678, invitees: 2000, depositPerPerson: 1200 },
+      { id: 12, reward: 266678, invitees: 5000, depositPerPerson: 1200 },
+    ];
+
+    if (config?.referralTiers) {
+      try {
+        const customTiers = JSON.parse(config.referralTiers as string);
+        return customTiers.map((tier: any) => ({
+          id: tier.id,
+          reward: tier.bonus,
+          invitees: tier.requiredReferrals,
+          depositPerPerson: tier.depositPerPerson
+        }));
+      } catch (error) {
+        console.warn('Failed to parse referral tiers from config, using defaults');
+      }
+    }
+
+    return defaultTiers;
+  } catch (error) {
+    console.warn('Failed to fetch referral config from database, using defaults:', error);
+    // Return default tiers if database query fails
+    return [
+      { id: 1, reward: 58, invitees: 2, depositPerPerson: 200 },
+      { id: 2, reward: 188, invitees: 4, depositPerPerson: 200 },
+      { id: 3, reward: 338, invitees: 10, depositPerPerson: 500 },
+      { id: 4, reward: 1678, invitees: 30, depositPerPerson: 800 },
+      { id: 5, reward: 2678, invitees: 50, depositPerPerson: 1200 },
+      { id: 6, reward: 3678, invitees: 75, depositPerPerson: 1200 },
+      { id: 7, reward: 6678, invitees: 100, depositPerPerson: 1200 },
+      { id: 8, reward: 11678, invitees: 200, depositPerPerson: 1200 },
+      { id: 9, reward: 27678, invitees: 500, depositPerPerson: 1200 },
+      { id: 10, reward: 55678, invitees: 1000, depositPerPerson: 1200 },
+      { id: 11, reward: 111678, invitees: 2000, depositPerPerson: 1200 },
+      { id: 12, reward: 266678, invitees: 5000, depositPerPerson: 1200 },
+    ];
+  }
+}
 
 // Generate referral code
 function generateReferralCode(username: string): string {
@@ -90,14 +131,21 @@ router.get('/stats', authenticateToken, requireUser, asyncHandler(async (req: Au
   });
 
   // Calculate progress for each tier
-  const tiersWithProgress = REFERRAL_BONUS_TIERS.map(tier => {
+  const REFERRAL_BONUS_TIERS = await getReferralBonusTiers();
+  const tiersWithProgress = REFERRAL_BONUS_TIERS.map((tier: any) => {
     const progress = Math.min(validReferralsCount, tier.invitees);
     const isCompleted = progress >= tier.invitees;
     
     return {
-      ...tier,
+      id: tier.id,
+      name: `Bonus ${tier.id}`,
+      requiredReferrals: tier.invitees,
+      bonus: tier.reward,
+      depositPerPerson: tier.depositPerPerson,
       progress,
       validReferrals: progress,
+      isCompleted,
+      isClaimed: false, // TODO: Check if already claimed
       status: isCompleted ? 'completed' : 'unfinished'
     };
   });
@@ -207,7 +255,8 @@ router.post('/claim/:tierId', authenticateToken, requireUser, asyncHandler(async
   const userId = req.user!.id;
   const tierId = parseInt(req.params.tierId);
 
-  const tier = REFERRAL_BONUS_TIERS.find(t => t.id === tierId);
+  const REFERRAL_BONUS_TIERS = await getReferralBonusTiers();
+  const tier = REFERRAL_BONUS_TIERS.find((t: any) => t.id === tierId);
   if (!tier) {
     throw new ValidationError('Invalid tier ID');
   }

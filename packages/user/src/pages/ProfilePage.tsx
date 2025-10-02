@@ -37,7 +37,6 @@ import { userService } from '../services/userService';
 import { debounce } from '../utils/debounce';
 import { toast } from 'sonner';
 import AvatarSelector from '../components/AvatarSelector';
-import AvatarUploader from '../components/AvatarUploader';
 import UserLogs from '../components/UserLogs';
 import { getAvatarById, DEFAULT_AVATAR } from '../assets/avatars';
 
@@ -109,18 +108,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleAvatarUpload = async (avatarUrl: string) => {
-    try {
-      const updated = await userService.updateProfile({
-        avatarUrl: avatarUrl,
-      });
-      setUser((prev) => (prev ? { ...prev, ...updated } : prev));
-      setCurrentAvatarUrl(avatarUrl);
-      toast.success('Avatar uploaded successfully');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to update avatar');
-    }
-  };
 
   // Real-time balance updates via socket (same as GamePage)
   useEffect(() => {
@@ -248,6 +235,32 @@ const ProfilePage: React.FC = () => {
                 <div className="w-4 h-4"></div>
               </div>
             </div>
+            
+            {/* Wagering Progress */}
+            {(user?.wageringRequired ?? 0) > 0 && (
+              <div className="border-t border-gray-600 pt-3 mt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">Wagering Progress</span>
+                  <span className="text-xs text-gray-400">
+                    {formatCurrency(user?.wageringProgress ?? 0)} / {formatCurrency(user?.wageringRequired ?? 0)}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min(100, ((user?.wageringProgress ?? 0) / (user?.wageringRequired ?? 1)) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-400 mt-1">
+                  {((user?.wageringProgress ?? 0) >= (user?.wageringRequired ?? 0)) ? 
+                    '✅ Wagering requirement completed!' : 
+                    `₹${formatCurrency(Math.max(0, (user?.wageringRequired ?? 0) - (user?.wageringProgress ?? 0)))} more to wager`
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -447,16 +460,9 @@ const ProfilePage: React.FC = () => {
               </div>
               
               <div className="space-y-6">
-                {/* Avatar Uploader */}
-                <AvatarUploader
-                  currentAvatarUrl={currentAvatarUrl}
-                  onAvatarSelect={handleAvatarSelect}
-                  onAvatarUpload={handleAvatarUpload}
-                />
-                
-                {/* Divider */}
-                <div className="border-t border-gray-700 pt-6">
-                  <h4 className="text-white font-medium mb-4 text-center">Or Choose from Gallery</h4>
+                {/* Avatar Gallery */}
+                <div>
+                  <h4 className="text-white font-medium mb-4 text-center">Choose from Available Avatars</h4>
                   <AvatarSelector
                     selectedAvatar={selectedAvatar}
                     onAvatarSelect={handleAvatarSelect}

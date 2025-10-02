@@ -209,15 +209,23 @@ export class WalletService {
   /**
    * Check if user can withdraw from betting wallet
    * Only betting wallet funds can be withdrawn
+   * Must meet wagering requirements before withdrawal
    */
   static async canWithdraw(userId: string, amount: number): Promise<{
     canWithdraw: boolean;
     reason?: string;
     availableForWithdrawal: number;
+    wageringRequired?: number;
+    wageringProgress?: number;
+    wageringRemaining?: number;
   }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { walletBetting: true },
+      select: { 
+        walletBetting: true, 
+        wageringRequired: true, 
+        wageringProgress: true 
+      },
     });
 
     if (!user) {
@@ -229,18 +237,39 @@ export class WalletService {
     }
 
     const bettingWalletBalance = Number(user.walletBetting);
+    const wageringRequired = user.wageringRequired || 0;
+    const wageringProgress = user.wageringProgress || 0;
+    const wageringRemaining = Math.max(0, wageringRequired - wageringProgress);
 
     if (amount > bettingWalletBalance) {
       return {
         canWithdraw: false,
         reason: 'Insufficient betting wallet balance',
         availableForWithdrawal: bettingWalletBalance,
+        wageringRequired,
+        wageringProgress,
+        wageringRemaining,
+      };
+    }
+
+    // Check wagering requirement
+    if (wageringRequired > 0 && wageringProgress < wageringRequired) {
+      return {
+        canWithdraw: false,
+        reason: `Wagering requirement not met. You need to wager ₹${wageringRemaining.toFixed(2)} more before withdrawal.`,
+        availableForWithdrawal: bettingWalletBalance,
+        wageringRequired,
+        wageringProgress,
+        wageringRemaining,
       };
     }
 
     return {
       canWithdraw: true,
       availableForWithdrawal: bettingWalletBalance,
+      wageringRequired,
+      wageringProgress,
+      wageringRemaining,
     };
   }
 }

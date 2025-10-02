@@ -14,6 +14,7 @@ import AuditLogsPage from './pages/AuditLogsPage';
 import PromotionsPage from './pages/PromotionsPage';
 import GiftCodeManagementPage from './pages/GiftCodeManagementPage';
 import PaymentManagementPage from './pages/PaymentManagementPage';
+import ReferralManagementPage from './pages/ReferralManagementPage';
 import DiagnosticsPage from './pages/DiagnosticsPage';
 import SupportRequestsPage from './pages/SupportRequestsPage';
 import FeedbacksPage from './pages/FeedbacksPage';
@@ -53,6 +54,7 @@ function App() {
         <Route path="/feedbacks" element={<FeedbacksPage />} />
         <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/gift-codes" element={<GiftCodeManagementPage />} />
+        <Route path="/referrals" element={<ReferralManagementPage />} />
         <Route path="/audit-logs" element={<AuditLogsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -27,11 +27,11 @@ const DashboardPage: React.FC = () => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const { data: paymentStats } = useQuery({
-    queryKey: ['payment-stats-dashboard'],
-    queryFn: () => apiService.getPaymentStats(),
-    refetchInterval: 30000,
-  });
+  // const { data: paymentStats } = useQuery({
+  //   queryKey: ['payment-stats-dashboard'],
+  //   queryFn: () => apiService.getPaymentStats(),
+  //   refetchInterval: 30000,
+  // });
 
   useEffect(() => {
     if (!socket) return;

@@ -84,11 +84,11 @@ const SettingsPage: React.FC = () => {
             const l3 = Number((form.elements.namedItem('refL3') as HTMLInputElement).value);
             const day7 = Number((form.elements.namedItem('attDay7') as HTMLInputElement).value);
             const depPct = Number((form.elements.namedItem('depPct') as HTMLInputElement).value);
-            const tiers = String((form.elements.namedItem('tiers') as HTMLInputElement).value).split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
+            // const tiers = String((form.elements.namedItem('tiers') as HTMLInputElement).value).split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
             if ([l1,l2,l3].some(n => n < 0 || n > 100)) return toast.error('Referral % must be 0-100');
             if (day7 < 0) return toast.error('Attendance reward must be >= 0');
             if (depPct < 0 || depPct > 100) return toast.error('Deposit bonus % must be 0-100');
-            updateAdminCfg.mutate({ referralLevel1Pct: l1, referralLevel2Pct: l2, referralLevel3Pct: l3, attendanceDay7Amt: day7, attendanceTiers: tiers.length ? tiers : undefined });
+            updateAdminCfg.mutate({ referralLevel1Pct: l1, referralLevel2Pct: l2, referralLevel3Pct: l3, attendanceDay7Amt: day7 });
           }}>
             <div>
               <label className="form-label">Referral L1 (%)</label>

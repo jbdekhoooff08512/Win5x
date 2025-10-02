@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { 
@@ -11,13 +11,16 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { paymentService } from '../services/paymentService';
+import { userService } from '../services/userService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import { formatCurrency } from '@win5x/common';
 
 const WithdrawPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const { socket } = useSocket();
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -35,6 +38,46 @@ const WithdrawPage: React.FC = () => {
   const [attemptsLeft, setAttemptsLeft] = useState<number | undefined>();
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTime, setLockoutTime] = useState('');
+
+  // Refresh user data on component mount to get latest wagering info
+  useEffect(() => {
+    const refreshUserData = async () => {
+      try {
+        const userData = await userService.getProfile();
+        if (setUser) {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Failed to refresh user data:', error);
+      }
+    };
+
+    refreshUserData();
+  }, [setUser]);
+
+  // Real-time balance updates via socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleBalanceUpdate = (balanceUpdate: any) => {
+      console.log('WithdrawPage: Balance update received', balanceUpdate);
+      if (setUser) {
+        setUser(prev => prev ? {
+          ...prev,
+          walletBetting: balanceUpdate.bettingWallet !== undefined ? balanceUpdate.bettingWallet : prev.walletBetting,
+          walletGaming: balanceUpdate.gamingWallet !== undefined ? balanceUpdate.gamingWallet : prev.walletGaming,
+          wageringRequired: balanceUpdate.wageringRequired !== undefined ? balanceUpdate.wageringRequired : prev.wageringRequired,
+          wageringProgress: balanceUpdate.wageringProgress !== undefined ? balanceUpdate.wageringProgress : prev.wageringProgress,
+        } : null);
+      }
+    };
+
+    socket.on('user_balance_update', handleBalanceUpdate);
+
+    return () => {
+      socket.off('user_balance_update', handleBalanceUpdate);
+    };
+  }, [socket, setUser]);
 
   const paymentMethods = [
     { id: 'upi', name: 'UPI', icon: '📱', fields: ['upiId'] },
@@ -98,6 +141,16 @@ const WithdrawPage: React.FC = () => {
       return;
     }
     
+    // Check wagering requirement FIRST - before any other validation
+    const wageringRequired = user?.wageringRequired || 0;
+    const wageringProgress = user?.wageringProgress || 0;
+    
+    if (wageringRequired > 0 && wageringProgress < wageringRequired) {
+      const remaining = wageringRequired - wageringProgress;
+      toast.error(`Wagering requirement not met. You need to wager ₹${remaining.toFixed(2)} more before withdrawal.`);
+      return;
+    }
+    
     if (amountNum < 100) {
       toast.error('Minimum withdrawal amount is ₹100');
       return;
@@ -121,7 +174,7 @@ const WithdrawPage: React.FC = () => {
       return;
     }
 
-    // Show password verification modal
+    // Only show password modal if wagering requirement is met
     setPasswordError('');
     setAttemptsLeft(undefined);
     setIsLocked(false);
@@ -195,6 +248,34 @@ const WithdrawPage: React.FC = () => {
             <p className="text-2xl font-bold text-green-400">
               {formatCurrency(user?.walletBetting || 0, '₹')}
             </p>
+            
+            {/* Wagering Status */}
+            {(user?.wageringRequired ?? 0) > 0 && (
+              <div className="mt-3 p-3 bg-gray-800 rounded-lg border border-gray-600">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-400">Wagering Progress</span>
+                  <span className="text-xs text-gray-300">
+                    {formatCurrency(user?.wageringProgress ?? 0)} / {formatCurrency(user?.wageringRequired ?? 0)}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min(100, ((user?.wageringProgress ?? 0) / (user?.wageringRequired ?? 1)) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+                <div className="text-xs text-center">
+                  {((user?.wageringProgress ?? 0) >= (user?.wageringRequired ?? 0)) ? 
+                    <span className="text-green-400">✅ Ready to withdraw</span> : 
+                    <span className="text-yellow-400">
+                      ₹{formatCurrency(Math.max(0, (user?.wageringRequired ?? 0) - (user?.wageringProgress ?? 0)))} more to wager
+                    </span>
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -232,6 +313,34 @@ const WithdrawPage: React.FC = () => {
                   <p className="text-sm text-gray-400 mt-1">
                     Min: ₹100 | Available: {formatCurrency(user?.walletBetting || 0, '₹')}
                   </p>
+                  
+                  {/* Wagering Warning */}
+                  {(user?.wageringRequired ?? 0) > 0 && (user?.wageringProgress ?? 0) < (user?.wageringRequired ?? 0) && (
+                    <div className="mt-3 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="h-5 w-5 text-red-400" />
+                        <span className="text-red-300 font-semibold">Wagering Requirement Not Met</span>
+                      </div>
+                      <div className="text-sm text-red-200">
+                        <p>You need to wager ₹{Math.max(0, (user?.wageringRequired ?? 0) - (user?.wageringProgress ?? 0)).toFixed(2)} more before withdrawal.</p>
+                        <p className="mt-1">Current Progress: ₹{user?.wageringProgress ?? 0} / ₹{user?.wageringRequired ?? 0}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Wagering Success */}
+                  {(user?.wageringRequired ?? 0) > 0 && (user?.wageringProgress ?? 0) >= (user?.wageringRequired ?? 0) && (
+                    <div className="mt-3 p-3 bg-green-900/30 border border-green-500/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <span className="text-green-300 font-semibold">Wagering Requirement Complete</span>
+                      </div>
+                      <div className="text-sm text-green-200">
+                        <p>✅ You can now withdraw your funds!</p>
+                        <p className="mt-1">Progress: ₹{user?.wageringProgress ?? 0} / ₹{user?.wageringRequired ?? 0}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment Method Selection */}
@@ -370,8 +479,17 @@ const WithdrawPage: React.FC = () => {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={!amount || !paymentMethod || createWithdrawalMutation.isPending}
-                  className="btn btn-success btn-lg w-full"
+                  disabled={
+                    !amount || 
+                    !paymentMethod || 
+                    createWithdrawalMutation.isPending ||
+                    ((user?.wageringRequired ?? 0) > 0 && (user?.wageringProgress ?? 0) < (user?.wageringRequired ?? 0))
+                  }
+                  className={`btn btn-lg w-full ${
+                    ((user?.wageringRequired ?? 0) > 0 && (user?.wageringProgress ?? 0) < (user?.wageringRequired ?? 0))
+                      ? 'btn-disabled opacity-50 cursor-not-allowed'
+                      : 'btn-success'
+                  }`}
                 >
                   {createWithdrawalMutation.isPending ? (
                     <>
@@ -381,7 +499,10 @@ const WithdrawPage: React.FC = () => {
                   ) : (
                     <>
                       <Wallet className="h-5 w-5 mr-2" />
-                      Request Withdrawal
+                      {((user?.wageringRequired ?? 0) > 0 && (user?.wageringProgress ?? 0) < (user?.wageringRequired ?? 0))
+                        ? 'Wagering Required'
+                        : 'Request Withdrawal'
+                      }
                     </>
                   )}
                 </button>

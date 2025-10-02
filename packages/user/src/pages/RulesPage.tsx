@@ -19,9 +19,9 @@ const RulesPage: React.FC = () => {
             <h3 className="card-title flex items-center gap-2"><Info className="h-5 w-5 text-gold-400" /> Basics</h3>
           </div>
           <div className="card-content space-y-3 text-gray-300">
-            <p>- Select a bet option (number, color, odd/even) and enter your amount.</p>
+            <p>- Select a bet option (Number 0-9 or Parity Odd/Even) and enter your amount.</p>
             <p>- Each round has a betting window. Bets after the timer closes are rejected.</p>
-            <p>- Payouts: Number x5, Color x2, Odd/Even x2 unless specified otherwise in-game.</p>
+            <p>- All payouts are 5x your bet amount for both Number and Parity bets.</p>
           </div>
         </div>
 

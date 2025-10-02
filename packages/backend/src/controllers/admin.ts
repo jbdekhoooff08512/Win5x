@@ -514,10 +514,14 @@ router.put('/transactions/:transactionId', requirePermission('MANAGE_WITHDRAWALS
   // Handle balance adjustments
   if (status === 'APPROVED') {
     if (transaction.type === 'DEPOSIT') {
-      // Add deposit amount to user balance
+      // Add deposit amount to user balance with wagering requirement
       await prisma.user.update({
         where: { id: transaction.userId },
-        data: { walletBetting: { increment: transaction.amount } },
+        data: { 
+          walletBetting: { increment: transaction.amount },
+          // Set wagering requirement: 5x the deposit amount
+          wageringRequired: { increment: transaction.amount * 5 },
+        },
       });
     } else if (transaction.type === 'WITHDRAWAL') {
       // Deduct withdrawal amount from user balance (amount is already negative)
