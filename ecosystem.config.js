@@ -22,7 +22,7 @@ module.exports = {
     {
       name: 'win5x-admin',
       script: 'serve',
-      args: '-s packages/admin/dist -l 8081',
+      args: '-s packages/admin/dist -p 8081',
       cwd: '/var/www/kart',
       instances: 1,
       exec_mode: 'fork',
@@ -41,7 +41,7 @@ module.exports = {
     {
       name: 'win5x-user',
       script: 'serve',
-      args: '-s packages/user/dist -l 8080',
+      args: '-s packages/user/dist -p 8080',
       cwd: '/var/www/kart',
       instances: 1,
       exec_mode: 'fork',
