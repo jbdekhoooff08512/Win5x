@@ -31,7 +31,6 @@ import MessagePage from './pages/MessagePage';
 import GiftCodesPage from './pages/GiftCodesPage';
 import NotificationPage from './pages/NotificationPage';
 import GameStatsPage from './pages/GameStatsPage';
-import AvatarTestPage from './pages/AvatarTestPage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
@@ -108,7 +107,6 @@ function App() {
             <Route path="/gifts" element={<GiftCodesPage />} />
             <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/game-stats" element={<GameStatsPage />} />
-            <Route path="/avatar-test" element={<AvatarTestPage />} />
             <Route path="*" element={<Navigate to="/game" replace />} />
           </Routes>
         </Layout>
