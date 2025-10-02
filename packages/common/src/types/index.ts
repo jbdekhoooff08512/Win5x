@@ -7,6 +7,8 @@ export interface User {
   mustChangePassword?: boolean;
   walletBetting: number; // Betting Wallet - for deposits, withdrawals, and betting
   walletGaming: number;  // Gaming Wallet - for cashback, referrals, and bonuses
+  wageringRequired: number; // Required wagering amount for bonus withdrawals
+  wageringProgress: number;  // Current wagering progress
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
