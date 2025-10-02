@@ -13,6 +13,9 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly LOG_FILE="/tmp/win5x-setup-$(date +%Y%m%d-%H%M%S).log"
 readonly BACKUP_DIR="/tmp/win5x-backup-$(date +%Y%m%d-%H%M%S)"
 
+# Initialize variables
+CURRENT_STEP="Initialization"
+
 # Default configuration
 DATABASE_PASSWORD="${DATABASE_PASSWORD:-Win5xDB@2024}"
 ADMIN_USERNAME="${ADMIN_USERNAME:-admin}"
@@ -67,7 +70,7 @@ log_step() {
 cleanup() {
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
-        log_error "Setup failed at step: $CURRENT_STEP"
+        log_error "Setup failed at step: ${CURRENT_STEP:-Unknown}"
         log_error "Check log file: $LOG_FILE"
         log_error "Backup directory: $BACKUP_DIR"
         
@@ -111,10 +114,16 @@ restore_from_backup() {
 validate_system() {
     log_step "Validating system requirements..."
     
-    # Check if running as root or with sudo
+    # Check if running as root
     if [ "$EUID" -eq 0 ]; then
-        log_error "Do not run this script as root. Use sudo when needed."
-        exit 1
+        log_warning "Running as root user. This is allowed but not recommended for security reasons."
+        log_warning "Consider creating a non-root user with sudo privileges for production deployments."
+        read -p "Do you want to continue as root? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Exiting. Please create a non-root user and run the script again."
+            exit 0
+        fi
     fi
     
     # Check available disk space (minimum 2GB)
@@ -156,6 +165,11 @@ run_command() {
     
     CURRENT_STEP="$description"
     log_step "$description"
+    
+    # Remove sudo if running as root
+    if [ "$EUID" -eq 0 ]; then
+        command=$(echo "$command" | sed 's/sudo //g')
+    fi
     
     if eval "$command" >> "$LOG_FILE" 2>&1; then
         log_success "$description completed"
@@ -289,7 +303,12 @@ setup_project() {
     
     # Create project directory
     run_command "sudo mkdir -p $PROJECT_PATH" "Project directory creation"
-    run_command "sudo chown -R $USER:$USER $PROJECT_PATH" "Project directory ownership"
+    if [ "$EUID" -eq 0 ]; then
+        # Running as root, no need to change ownership
+        log_info "Running as root, skipping ownership change"
+    else
+        run_command "sudo chown -R $USER:$USER $PROJECT_PATH" "Project directory ownership"
+    fi
     
     # If we're in the project directory, copy files
     if [ -f "package.json" ] && [ -f "pnpm-workspace.yaml" ]; then
