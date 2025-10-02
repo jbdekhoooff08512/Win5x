@@ -65,3 +65,4 @@ if ($redisCheck) {
 }
 
 Write-Host "`n🏁 Health check complete!" -ForegroundColor Green
+
