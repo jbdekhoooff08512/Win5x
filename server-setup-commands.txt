@@ -1,0 +1,48 @@
+# Fresh Server Setup Commands
+# Copy and paste these commands one by one on your server
+
+# 1. Connect to server
+ssh -p 6579 root@217.148.142.91
+
+# 2. Navigate to project directory
+cd /var/www/win5x
+
+# 3. Stop all PM2 processes
+pm2 stop all
+pm2 delete all
+
+# 4. Clean old files (keep only .git)
+find . -maxdepth 1 -type f -delete
+find . -maxdepth 1 -type d ! -name '.git' ! -name '.' -exec rm -rf {} +
+
+# 5. Pull latest code
+git pull origin main
+
+# 6. Install dependencies
+pnpm install
+
+# 7. Build packages
+pnpm run build
+
+# 8. Setup backend database
+cd packages/backend
+pnpm run db:generate
+pnpm run db:migrate
+
+# 9. Go back to root
+cd /var/www/win5x
+
+# 10. Start services
+pm2 start ecosystem.config.js
+
+# 11. Save PM2 config
+pm2 save
+pm2 startup
+
+# 12. Check status
+pm2 status
+
+# Access URLs:
+# Backend API: http://217.148.142.91:8082
+# Admin Panel: http://217.148.142.91:8081
+# User Panel: http://217.148.142.91:8080

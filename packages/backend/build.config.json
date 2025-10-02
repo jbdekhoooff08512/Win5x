@@ -1,0 +1,34 @@
+{
+  "name": "win5x-backend-build",
+  "version": "1.0.0",
+  "description": "Build configuration for Win5x backend server",
+  "scripts": {
+    "build": "node build.js",
+    "build:win": "powershell -ExecutionPolicy Bypass -File build.ps1",
+    "build:clean": "npm run clean && npm run build",
+    "build:clean:win": "npm run clean && npm run build:win"
+  },
+  "buildConfig": {
+    "outputDir": "./build",
+    "sourceDir": "./src",
+    "distDir": "./dist",
+    "includeFiles": [
+      "package.json",
+      "prisma/schema.prisma",
+      "prisma/migrations",
+      "uploads"
+    ],
+    "excludeFiles": [
+      "node_modules",
+      "src",
+      "*.log",
+      "*.test.ts",
+      "*.spec.ts"
+    ],
+    "productionScripts": {
+      "start": "node dist/server.js",
+      "db:migrate": "prisma migrate deploy",
+      "db:generate": "prisma generate"
+    }
+  }
+}
