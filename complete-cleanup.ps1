@@ -3,7 +3,7 @@
 # WARNING: This will delete ALL data and configurations!
 
 param(
-    [string]$ProjectPath = "/var/www/win5x",
+    [string]$ProjectPath = "/var/www/kart",
     [string]$DbName = "win5x_db",
     [string]$DbUser = "win5x_user"
 )
