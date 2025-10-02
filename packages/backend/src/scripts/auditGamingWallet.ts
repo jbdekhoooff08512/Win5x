@@ -10,7 +10,7 @@ async function main(username: string) {
     where: { userId: user.id, status: 'LOST' },
     select: { amount: true },
   });
-  const totalLost = lost.reduce((s, b) => s + (b.amount || 0), 0);
+  const totalLost = lost.reduce((s: any, b: any) => s + (b.amount || 0), 0);
   const expectedReversal = totalLost * 0.1;
 
   console.log({ walletBetting: user.walletBetting, walletGaming: user.walletGaming, totalLost, expectedReversal });

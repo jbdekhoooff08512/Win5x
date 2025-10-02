@@ -1,4 +1,5 @@
-import { PrismaClient, GameRound, GameRoundStatus, Bet, BetStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { GameRound, GameRoundStatus, Bet, BetStatus } from '@prisma/client';
 import { RedisService } from './RedisService';
 // ReferralService removed - using direct database calls
 import { ConfigService } from './ConfigService';
@@ -477,7 +478,7 @@ export class GameEngine extends EventEmitter {
   async placeBet(userId: string, roundId: string, betType: string, betValue: any, amount: number, useGamingWallet: boolean = false): Promise<Bet> {
     try {
       // Use database transaction to prevent race conditions
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx: any) => {
         // Validate round is in betting phase
         const round = await tx.gameRound.findUnique({
           where: { id: roundId },
@@ -533,7 +534,7 @@ export class GameEngine extends EventEmitter {
           where: { userId, roundId },
           select: { betType: true },
         });
-        const usedCategories = new Set(existingBets.map(b => normalizeCategory(String(b.betType))));
+        const usedCategories = new Set(existingBets.map((b: any) => normalizeCategory(String(b.betType))));
         usedCategories.add(newCategory);
         if (usedCategories.size > 2) {
           throw new Error('You can bet in at most two categories (Numbers, Odd/Even) per round');
@@ -621,7 +622,7 @@ export class GameEngine extends EventEmitter {
         distribution.numbers[i.toString()] = { count: 0, amount: 0 };
       }
 
-      bets.forEach(bet => {
+      bets.forEach((bet: any) => {
         const betValue = JSON.parse(bet.betValue);
         
         switch (bet.betType) {
@@ -692,8 +693,8 @@ export class GameEngine extends EventEmitter {
             },
             select: { id: true, amount: true },
           });
-          const totalLosingAmount = losingBets.reduce((s, b) => s + (b.amount || 0), 0) || 1;
-          const betCashbacks = losingBets.map((b) => ({
+          const totalLosingAmount = losingBets.reduce((s: any, b: any) => s + (b.amount || 0), 0) || 1;
+          const betCashbacks = losingBets.map((b: any) => ({
             betId: b.id,
             amount: Number(((cashbackAmount * (b.amount || 0)) / totalLosingAmount).toFixed(2)),
           }));

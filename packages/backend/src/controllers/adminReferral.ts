@@ -253,7 +253,7 @@ router.get('/stats', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (re
     })
   ]);
 
-  const validReferralsCount = validReferrals.filter(ref => 
+  const validReferralsCount = validReferrals.filter((ref: any) => 
     ref.user.depositRequests.length > 0
   ).length;
 
@@ -265,16 +265,16 @@ router.get('/stats', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (re
       totalReferralEarnings: totalReferralEarnings._sum.amount || 0,
       conversionRate: totalReferrals > 0 ? (validReferralsCount / totalReferrals * 100).toFixed(2) : 0
     },
-    topReferrers: topReferrers.map(user => ({
+    topReferrers: topReferrers.map((user: any) => ({
       id: user.id,
       username: user.username,
       totalReferrals: user._count.referrals,
-      validReferrals: user.referrals.filter(ref => 
+      validReferrals: user.referrals.filter((ref: any) => 
         ref.user.depositRequests.length > 0
       ).length,
       totalEarnings: user.referralEarnings.reduce((sum: number, earning: any) => sum + earning.amount, 0)
     })),
-    recentReferrals: recentReferrals.map(ref => ({
+    recentReferrals: recentReferrals.map((ref: any) => ({
       id: ref.id,
       referredUser: ref.user.username,
       referrer: ref.parent.username,
@@ -345,7 +345,7 @@ router.get('/records', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (
   const totalPages = Math.ceil(total / Number(limit));
 
   res.json(createSuccessResponse({
-    items: referrals.map(ref => ({
+    items: referrals.map((ref: any) => ({
       id: ref.id,
       referredUser: {
         id: ref.user.id,
@@ -353,7 +353,7 @@ router.get('/records', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (
         email: ref.user.email,
         createdAt: ref.user.createdAt,
         hasDeposited: ref.user.depositRequests.length > 0,
-        totalDeposits: ref.user.depositRequests.reduce((sum, dep) => sum + dep.amount, 0)
+        totalDeposits: ref.user.depositRequests.reduce((sum: any, dep: any) => sum + dep.amount, 0)
       },
       referrer: {
         id: ref.parent.id,

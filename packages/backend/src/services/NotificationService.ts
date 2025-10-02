@@ -208,7 +208,7 @@ export class NotificationService {
     ]);
 
     return {
-      notifications: notifications.map(n => ({
+      notifications: notifications.map((n: any) => ({
         ...n,
         type: n.type as Notification['type'],
         data: n.data ? JSON.parse(n.data) : null,

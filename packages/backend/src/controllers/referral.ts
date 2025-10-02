@@ -120,7 +120,7 @@ router.get('/stats', authenticateToken, requireUser, asyncHandler(async (req: Au
     }
   });
 
-  const validReferralsCount = validReferrals.filter(ref => 
+  const validReferralsCount = validReferrals.filter((ref: any) => 
     ref.user.depositRequests.length > 0
   ).length;
 
@@ -182,13 +182,13 @@ router.get('/stats', authenticateToken, requireUser, asyncHandler(async (req: Au
     validReferrals: validReferralsCount,
     totalEarnings: totalEarnings._sum.amount || 0,
     tiers: tiersWithProgress,
-    recentReferrals: recentReferrals.map(ref => ({
+    recentReferrals: recentReferrals.map((ref: any) => ({
       id: ref.id,
       username: ref.user.username,
       referralCode: ref.user.referralCode,
       joinedAt: ref.user.createdAt,
       hasDeposited: ref.user.depositRequests.length > 0,
-      totalDeposits: ref.user.depositRequests.reduce((sum, dep) => sum + dep.amount, 0)
+      totalDeposits: ref.user.depositRequests.reduce((sum: any, dep: any) => sum + dep.amount, 0)
     }))
   };
 
@@ -228,14 +228,14 @@ router.get('/records', authenticateToken, requireUser, asyncHandler(async (req: 
     where: { parentId: userId }
   });
 
-  const records = referrals.map(ref => ({
+  const records = referrals.map((ref: any) => ({
     id: ref.id,
     username: ref.user.username,
     email: ref.user.email,
     referralCode: ref.user.referralCode,
     joinedAt: ref.user.createdAt,
     hasDeposited: ref.user.depositRequests.length > 0,
-    totalDeposits: ref.user.depositRequests.reduce((sum, dep) => sum + dep.amount, 0),
+    totalDeposits: ref.user.depositRequests.reduce((sum: any, dep: any) => sum + dep.amount, 0),
     firstDepositAt: ref.user.depositRequests.length > 0 ? ref.user.depositRequests[0].createdAt : null
   }));
 
@@ -275,7 +275,7 @@ router.post('/claim/:tierId', authenticateToken, requireUser, asyncHandler(async
     }
   });
 
-  const validReferralsCount = validReferrals.filter(ref => 
+  const validReferralsCount = validReferrals.filter((ref: any) => 
     ref.user.depositRequests.length > 0
   ).length;
 

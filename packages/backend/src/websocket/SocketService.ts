@@ -464,7 +464,7 @@ export class SocketService {
         distribution.numbers[i.toString()] = { count: 0, amount: 0 };
       }
 
-      bets.forEach(bet => {
+      bets.forEach((bet: any) => {
         const betValue = JSON.parse(bet.betValue);
         
         switch (bet.betType) {

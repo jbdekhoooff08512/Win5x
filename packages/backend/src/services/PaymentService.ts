@@ -37,8 +37,8 @@ export class PaymentService {
     return {
       upi: {
         methods: upiMethods,
-        minAmount: upiMethods.length > 0 ? Math.min(...upiMethods.map(m => m.minAmount)) : 100,
-        maxAmount: upiMethods.length > 0 ? Math.max(...upiMethods.map(m => m.maxAmount)) : 100000,
+        minAmount: upiMethods.length > 0 ? Math.min(...upiMethods.map((m: any) => m.minAmount)) : 100,
+        maxAmount: upiMethods.length > 0 ? Math.max(...upiMethods.map((m: any) => m.maxAmount)) : 100000,
         currency: 'INR',
         quickAmounts: [100, 200, 500, 1000, 2000, 5000]
       },

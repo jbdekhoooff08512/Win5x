@@ -42,7 +42,7 @@ router.get('/current-round', optionalAuth, asyncHandler(async (req: Authenticate
     distribution.numbers[i.toString()] = { count: 0, amount: 0 };
   }
 
-  bets.forEach(bet => {
+  bets.forEach((bet: any) => {
     const betValue = JSON.parse(bet.betValue);
     
     switch (bet.betType) {
@@ -68,7 +68,7 @@ router.get('/current-round', optionalAuth, asyncHandler(async (req: Authenticate
     round: currentRound,
     distribution,
     totalBets: bets.length,
-    totalAmount: bets.reduce((sum, bet) => sum + bet.amount, 0),
+    totalAmount: bets.reduce((sum: any, bet: any) => sum + bet.amount, 0),
   }));
 }));
 
@@ -165,7 +165,7 @@ router.get('/history/total', optionalAuth, asyncHandler(async (req: Authenticate
   const totalPages = Math.ceil(total / pageSize);
 
   // Transform data to match required format
-  const historyItems = rounds.map(round => ({
+  const historyItems = rounds.map((round: any) => ({
     round: round.roundNumber,
     winningNumber: round.winningNumber,
     result: round.isWinningOdd ? 'Odd' : 'Even',
@@ -307,20 +307,20 @@ router.get('/leaderboard', optionalAuth, asyncHandler(async (req: AuthenticatedR
   });
 
   // Get user details
-  const userIds = topWinners.map(winner => winner.userId);
+  const userIds = topWinners.map((winner: any) => winner.userId);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
     select: { id: true, username: true },
   });
 
-  const userMap = new Map(users.map(user => [user.id, user]));
+  const userMap = new Map(users.map((user: any) => [user.id, user]));
 
-  const leaderboard = topWinners.map((winner, index) => {
+  const leaderboard = topWinners.map((winner: any, index: any) => {
     const user = userMap.get(winner.userId);
     return {
       rank: index + 1,
       userId: winner.userId,
-      username: user?.username || 'Unknown',
+      username: (user as any)?.username || 'Unknown',
       totalWinnings: winner._sum.actualPayout || 0,
       totalWins: winner._count.id,
     };
@@ -473,7 +473,7 @@ router.get('/number-stats', optionalAuth, asyncHandler(async (req: Authenticated
     numberFrequency[i] = 0;
   }
 
-  rounds.forEach(round => {
+  rounds.forEach((round: any) => {
     if (round.winningNumber !== null) {
       numberFrequency[round.winningNumber]++;
     }
@@ -490,7 +490,7 @@ router.get('/number-stats', optionalAuth, asyncHandler(async (req: Authenticated
   res.json(createSuccessResponse({
     totalRounds,
     numberStats,
-    recentWinningNumbers: rounds.slice(0, 20).map(r => r.winningNumber),
+    recentWinningNumbers: rounds.slice(0, 20).map((r: any) => r.winningNumber),
   }));
 }));
 

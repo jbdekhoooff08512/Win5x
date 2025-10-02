@@ -92,9 +92,9 @@ export class SecurityService {
       });
 
       if (dailyBets.length > 0) {
-        const amounts = dailyBets.map(bet => bet.amount);
+        const amounts = dailyBets.map((bet: any) => bet.amount);
         const maxAmount = Math.max(...amounts);
-        const avgAmount = amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length;
+        const avgAmount = amounts.reduce((sum: any, amount: any) => sum + amount, 0) / amounts.length;
 
         // Check for sudden large bets
         if (maxAmount > avgAmount * 10) {

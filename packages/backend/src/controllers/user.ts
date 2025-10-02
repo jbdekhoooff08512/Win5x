@@ -258,7 +258,7 @@ router.get('/referrals/progress', asyncHandler(async (req: AuthenticatedRequest,
     select: { userId: true },
   });
 
-  const inviteeIds = l1Refs.map(r => r.userId);
+  const inviteeIds = l1Refs.map((r: any) => r.userId);
   const inviteesCount = inviteeIds.length;
 
   if (inviteeIds.length === 0 || minDeposit <= 0) {
@@ -625,7 +625,7 @@ router.get('/history/player/:userId', asyncHandler(async (req: AuthenticatedRequ
   const totalPages = Math.ceil(total / pageSize);
 
   // Transform data to match required format
-  const historyItems = bets.map(bet => {
+  const historyItems = bets.map((bet: any) => {
     const isWin = bet.status === 'WON';
     const isOdd = bet.round?.isWinningOdd;
     const betValue = bet.betValue;
@@ -703,7 +703,7 @@ router.get('/logs/:userId', asyncHandler(async (req: AuthenticatedRequest, res) 
   const totalPages = Math.ceil(total / pageSize);
 
   // Transform data to match required format
-  const logItems = logs.map(log => ({
+  const logItems = logs.map((log: any) => ({
     action: log.type,
     date: log.createdAt.toISOString().split('T')[0], // YYYY-MM-DD format
     time: log.createdAt.toISOString().split('T')[1].split('.')[0].substring(0, 5), // HH:MM format
@@ -833,24 +833,24 @@ router.get('/leaderboard', asyncHandler(async (req: AuthenticatedRequest, res) =
 
   // Sort desc and take top 1000 (client will paginate if needed)
   const sorted = winnings
-    .map(w => ({ userId: w.userId, totalWon: Number(w._sum.actualPayout || 0) }))
-    .filter(x => x.totalWon > 0)
-    .sort((a, b) => b.totalWon - a.totalWon)
+    .map((w: any) => ({ userId: w.userId, totalWon: Number(w._sum.actualPayout || 0) }))
+    .filter((x: any) => x.totalWon > 0)
+    .sort((a: any, b: any) => b.totalWon - a.totalWon)
     .slice(0, 1000);
 
   // Fetch usernames for top entries and current user
   const topUserIds = sorted.slice(0, 200).map(x => x.userId);
   const users = await prisma.user.findMany({ where: { id: { in: topUserIds } }, select: { id: true, username: true } });
-  const idToName: Record<string, string> = Object.fromEntries(users.map(u => [u.id, u.username]));
+  const idToName: Record<string, string> = Object.fromEntries(users.map((u: any) => [u.id, u.username]));
 
-  const leaderboard = sorted.slice(0, 200).map((x, idx) => ({
+  const leaderboard = sorted.slice(0, 200).map((x: any, idx: any) => ({
     rank: idx + 1,
     userId: x.userId,
     username: idToName[x.userId] || 'Player',
     totalWon: x.totalWon,
   }));
 
-  const myIndex = sorted.findIndex(x => x.userId === req.user!.id);
+  const myIndex = sorted.findIndex((x: any) => x.userId === req.user!.id);
   const me = myIndex >= 0 ? { rank: myIndex + 1, totalWon: sorted[myIndex].totalWon } : { rank: null as any, totalWon: 0 };
 
   res.json(createSuccessResponse({ period, start, end: now, entries: leaderboard, me }));
