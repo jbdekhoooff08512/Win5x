@@ -146,15 +146,39 @@ validate_ports() {
     log_step "Validating port availability..."
     
     local ports=("$USER_PORT" "$ADMIN_PORT" "$BACKEND_PORT" "$NGINX_PORT" "$POSTGRES_PORT" "$REDIS_PORT")
+    local port_names=("User Panel" "Admin Panel" "Backend API" "Nginx" "PostgreSQL" "Redis")
+    local in_use_ports=()
     
-    for port in "${ports[@]}"; do
+    for i in "${!ports[@]}"; do
+        local port="${ports[$i]}"
+        local name="${port_names[$i]}"
+        
         if netstat -tuln | grep -q ":$port "; then
-            log_error "Port $port is already in use"
-            exit 1
+            in_use_ports+=("$name (port $port)")
+            log_warning "Port $port ($name) is already in use"
         fi
     done
     
-    log_success "All ports are available"
+    if [ ${#in_use_ports[@]} -gt 0 ]; then
+        log_warning "Found ${#in_use_ports[@]} ports already in use: ${in_use_ports[*]}"
+        log_info "This usually means the services are already running, which is normal for existing installations"
+        log_info "The script will attempt to configure and use the existing services"
+        
+        # Only fail for critical ports that we can't work around
+        local critical_ports=("$USER_PORT" "$ADMIN_PORT" "$BACKEND_PORT")
+        for port in "${critical_ports[@]}"; do
+            if netstat -tuln | grep -q ":$port "; then
+                log_error "Critical port $port is in use. Please stop the service using this port or use different ports."
+                log_info "You can set different ports using environment variables:"
+                log_info "USER_PORT=8083 ADMIN_PORT=8084 BACKEND_PORT=8085 ./master-setup.sh"
+                exit 1
+            fi
+        done
+        
+        log_success "Port validation completed - will work with existing services"
+    else
+        log_success "All ports are available"
+    fi
 }
 
 # Command execution with error handling
@@ -277,6 +301,26 @@ install_redis() {
         run_command "sudo systemctl enable redis-server" "Redis service enable"
     else
         log_info "Redis already installed"
+        
+        # Check if Redis is running and configure if needed
+        if sudo systemctl is-active --quiet redis-server; then
+            log_info "Redis is already running"
+        else
+            log_info "Starting Redis service"
+            run_command "sudo systemctl start redis-server" "Redis service start"
+            run_command "sudo systemctl enable redis-server" "Redis service enable"
+        fi
+        
+        # Update Redis configuration if needed
+        local redis_config="/etc/redis/redis.conf"
+        if ! grep -q "requirepass $REDIS_PASSWORD" "$redis_config"; then
+            log_info "Updating Redis configuration"
+            run_command "sudo cp $redis_config $redis_config.backup" "Redis config backup"
+            sudo sed -i "s/^# requirepass.*/requirepass $REDIS_PASSWORD/" "$redis_config"
+            sudo sed -i "s/^# maxmemory.*/maxmemory 256mb/" "$redis_config"
+            sudo sed -i "s/^# maxmemory-policy.*/maxmemory-policy allkeys-lru/" "$redis_config"
+            run_command "sudo systemctl restart redis-server" "Redis service restart"
+        fi
     fi
     
     log_success "Redis installed and configured"
