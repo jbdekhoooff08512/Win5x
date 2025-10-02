@@ -344,10 +344,22 @@ setup_database() {
     local db_name="win5x_db"
     local db_user="win5x_user"
     
-    # Create database and user
-    run_command "sudo -u postgres psql -c \"CREATE DATABASE $db_name;\"" "Database creation" true
-    run_command "sudo -u postgres psql -c \"CREATE USER $db_user WITH PASSWORD '$DATABASE_PASSWORD';\"" "Database user creation" true
-    run_command "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;\"" "Database privileges" true
+    # Check if database exists
+    if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
+        log_info "Database '$db_name' already exists"
+    else
+        run_command "sudo -u postgres psql -c \"CREATE DATABASE $db_name;\"" "Database creation"
+    fi
+    
+    # Check if user exists
+    if sudo -u postgres psql -c "SELECT 1 FROM pg_roles WHERE rolname='$db_user'" | grep -q "1 row"; then
+        log_info "Database user '$db_user' already exists"
+    else
+        run_command "sudo -u postgres psql -c \"CREATE USER $db_user WITH PASSWORD '$DATABASE_PASSWORD';\"" "Database user creation"
+    fi
+    
+    # Grant privileges (this will work even if user/database already exists)
+    run_command "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE $db_name TO $db_user;\"" "Database privileges"
     
     log_success "Database setup completed"
 }
@@ -454,14 +466,20 @@ setup_database_schema() {
     # Generate Prisma client
     run_command "pnpm run db:generate" "Prisma client generation"
     
-    # Run migrations
+    # Run migrations (this will handle existing migrations gracefully)
     run_command "pnpm run db:migrate:prod" "Database migration"
     
-    # Create admin user
+    # Create admin user (check if admin already exists first)
     export ADMIN_USERNAME="$ADMIN_USERNAME"
     export ADMIN_EMAIL="$ADMIN_EMAIL"
     export ADMIN_PASSWORD="$ADMIN_PASSWORD"
-    run_command "pnpm run create-admin" "Admin user creation"
+    
+    # Check if admin user already exists
+    if pnpm run create-admin 2>&1 | grep -q "already exists"; then
+        log_info "Admin user already exists, skipping creation"
+    else
+        run_command "pnpm run create-admin" "Admin user creation"
+    fi
     
     cd "$PROJECT_PATH"
     
@@ -750,6 +768,42 @@ display_final_info() {
     log "${CYAN}===============================================${NC}"
 }
 
+# Check if project is already set up
+check_existing_setup() {
+    log_step "Checking for existing setup..."
+    
+    local existing_components=()
+    
+    # Check for existing database
+    if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "win5x_db"; then
+        existing_components+=("Database")
+    fi
+    
+    # Check for existing PM2 processes
+    if pm2 list | grep -q "win5x"; then
+        existing_components+=("PM2 processes")
+    fi
+    
+    # Check for existing Nginx config
+    if [ -f "/etc/nginx/sites-available/win5x" ]; then
+        existing_components+=("Nginx configuration")
+    fi
+    
+    if [ ${#existing_components[@]} -gt 0 ]; then
+        log_warning "Found existing setup components: ${existing_components[*]}"
+        log_info "The script will attempt to update/configure existing components"
+        log_info "If you want a fresh installation, please remove existing components first"
+        read -p "Do you want to continue with the existing setup? (Y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            log_info "Exiting. Please clean up existing components and run again."
+            exit 0
+        fi
+    else
+        log_info "No existing setup detected, proceeding with fresh installation"
+    fi
+}
+
 # Main execution
 main() {
     log "${GREEN}🚀 Starting Win5x Master Setup...${NC}"
@@ -761,6 +815,7 @@ main() {
     # Pre-setup validation
     validate_system
     validate_ports
+    check_existing_setup
     backup_system
     
     # Installation steps
