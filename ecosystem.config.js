@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'win5x-backend',
       script: './packages/backend/dist/server.js',
-      cwd: '/var/www/kart',
+      cwd: '/var/www/win5x',
       instances: 1,
       exec_mode: 'fork',
       env: {
@@ -23,7 +23,7 @@ module.exports = {
       name: 'win5x-admin',
       script: 'serve',
       args: '-s packages/admin/dist -p 8081',
-      cwd: '/var/www/kart',
+      cwd: '/var/www/win5x',
       instances: 1,
       exec_mode: 'fork',
       env: {
@@ -42,7 +42,7 @@ module.exports = {
       name: 'win5x-user',
       script: 'serve',
       args: '-s packages/user/dist -p 8080',
-      cwd: '/var/www/kart',
+      cwd: '/var/www/win5x',
       instances: 1,
       exec_mode: 'fork',
       env: {

@@ -124,9 +124,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          <p>Default credentials:</p>
-          <p>Username: <code className="bg-gray-100 px-1 rounded">admin</code></p>
-          <p>Password: <code className="bg-gray-100 px-1 rounded">Admin123!</code></p>
+          <p>Contact your system administrator for login credentials</p>
         </div>
       </div>
     </div>

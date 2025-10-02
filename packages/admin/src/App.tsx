@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
@@ -32,34 +33,46 @@ function App() {
     );
   }
 
-  if (!admin) {
-    return <LoginPage />;
-  }
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/users/:userId" element={<UserDetailsPage />} />
-        <Route path="/payments" element={<PaymentManagementPage />} />
-        <Route path="/bets" element={<BetsPage />} />
-        <Route path="/rounds" element={<RoundsPage />} />
-        <Route path="/transactions" element={<TransactionsPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/diagnostics" element={<DiagnosticsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/support" element={<SupportRequestsPage />} />
-        <Route path="/feedbacks" element={<FeedbacksPage />} />
-        <Route path="/promotions" element={<PromotionsPage />} />
-        <Route path="/gift-codes" element={<GiftCodeManagementPage />} />
-        <Route path="/referrals" element={<ReferralManagementPage />} />
-        <Route path="/audit-logs" element={<AuditLogsPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      
+      {/* Protected routes */}
+      {admin ? (
+        <Route path="/admin/*" element={
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/users/:userId" element={<UserDetailsPage />} />
+              <Route path="/payments" element={<PaymentManagementPage />} />
+              <Route path="/bets" element={<BetsPage />} />
+              <Route path="/rounds" element={<RoundsPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/diagnostics" element={<DiagnosticsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/support" element={<SupportRequestsPage />} />
+              <Route path="/feedbacks" element={<FeedbacksPage />} />
+              <Route path="/promotions" element={<PromotionsPage />} />
+              <Route path="/gift-codes" element={<GiftCodeManagementPage />} />
+              <Route path="/referrals" element={<ReferralManagementPage />} />
+              <Route path="/audit-logs" element={<AuditLogsPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+            </Routes>
+          </Layout>
+        } />
+      ) : (
+        <Route path="/admin/*" element={<Navigate to="/login" replace />} />
+      )}
+      
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

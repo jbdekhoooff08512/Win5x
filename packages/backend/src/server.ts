@@ -59,10 +59,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "http://localhost:3001", "https:", "blob:"],
+      imgSrc: ["'self'", "data:", "http://217.148.142.91:8082", "https:", "blob:"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:3001"],
+      connectSrc: ["'self'", "ws:", "wss:", "http://217.148.142.91:8082"],
     },
   },
 }));
@@ -293,7 +293,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8082;
 
 async function startServer() {
   try {
