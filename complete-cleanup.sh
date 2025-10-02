@@ -1,121 +1,183 @@
 #!/bin/bash
 
-# Complete Server Cleanup Script for Win5x
-# WARNING: This will delete EVERYTHING - PM2, Nginx, Database, Files, etc.
-# Run this on server: ssh -p 6579 root@217.148.142.91
+# Win5x Complete Cleanup Script
+# This script removes everything related to Win5x installation
+# WARNING: This will delete ALL data and configurations!
 
-echo "⚠️  WARNING: This will delete EVERYTHING!"
-echo "   - All PM2 processes"
-echo "   - Nginx configuration"
-echo "   - Database and data"
-echo "   - All project files"
-echo "   - Redis data"
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Configuration
+PROJECT_PATH="${PROJECT_PATH:-/var/www/win5x}"
+DB_NAME="win5x_db"
+DB_USER="win5x_user"
+
+echo -e "${RED}⚠️  WARNING: This script will DELETE EVERYTHING!${NC}"
+echo -e "${RED}This includes:${NC}"
+echo -e "${RED}• All project files${NC}"
+echo -e "${RED}• Database and data${NC}"
+echo -e "${RED}• PM2 processes${NC}"
+echo -e "${RED}• Nginx configuration${NC}"
+echo -e "${RED}• Redis data${NC}"
+echo -e "${RED}• All logs${NC}"
 echo ""
-read -p "Are you sure you want to continue? (yes/no): " confirm
+read -p "Are you sure you want to continue? Type 'DELETE' to confirm: " confirmation
 
-if [ "$confirm" != "yes" ]; then
-    echo "❌ Cleanup cancelled"
-    exit 1
+if [ "$confirmation" != "DELETE" ]; then
+    echo -e "${YELLOW}Cleanup cancelled.${NC}"
+    exit 0
 fi
 
-echo "🔥 Starting COMPLETE SERVER CLEANUP..."
+echo -e "${RED}🚨 Starting complete cleanup...${NC}"
 
-# 1. Stop and delete all PM2 processes
-echo "📦 Stopping and deleting all PM2 processes..."
-pm2 stop all 2>/dev/null || true
-pm2 delete all 2>/dev/null || true
-pm2 kill 2>/dev/null || true
+# Function to run command with error handling
+run_command() {
+    local command="$1"
+    local description="$2"
+    
+    echo -e "${YELLOW}🔄 $description${NC}"
+    if eval "$command" 2>/dev/null; then
+        echo -e "${GREEN}✅ $description completed${NC}"
+    else
+        echo -e "${YELLOW}⚠️  $description - Some items may not exist${NC}"
+    fi
+}
 
-# 2. Stop and disable PM2 startup
-echo "🚫 Disabling PM2 startup..."
-pm2 unstartup 2>/dev/null || true
+# Stop and delete PM2 processes
+echo -e "${BLUE}🔄 Stopping PM2 processes...${NC}"
+run_command "pm2 delete all" "PM2 processes deletion"
+run_command "pm2 kill" "PM2 daemon kill"
 
-# 3. Stop Nginx
-echo "🌐 Stopping Nginx..."
-systemctl stop nginx 2>/dev/null || true
-systemctl disable nginx 2>/dev/null || true
+# Stop services
+echo -e "${BLUE}🔄 Stopping services...${NC}"
+run_command "sudo systemctl stop nginx" "Nginx service stop"
+run_command "sudo systemctl stop redis-server" "Redis service stop"
+run_command "sudo systemctl stop postgresql" "PostgreSQL service stop"
 
-# 4. Remove Nginx configuration
-echo "🗑️ Removing Nginx configuration..."
-rm -rf /etc/nginx/sites-available/win5x* 2>/dev/null || true
-rm -rf /etc/nginx/sites-enabled/win5x* 2>/dev/null || true
-rm -rf /etc/nginx/conf.d/win5x* 2>/dev/null || true
+# Remove Nginx configuration
+echo -e "${BLUE}🔄 Removing Nginx configuration...${NC}"
+run_command "sudo rm -f /etc/nginx/sites-available/win5x" "Nginx config removal"
+run_command "sudo rm -f /etc/nginx/sites-enabled/win5x" "Nginx site removal"
+run_command "sudo systemctl start nginx" "Nginx service restart"
 
-# 5. Stop and remove Redis
-echo "🔴 Stopping and removing Redis..."
-systemctl stop redis 2>/dev/null || true
-systemctl disable redis 2>/dev/null || true
-rm -rf /var/lib/redis 2>/dev/null || true
-rm -rf /etc/redis 2>/dev/null || true
+# Remove PostgreSQL database and user
+echo -e "${BLUE}🔄 Removing PostgreSQL database and user...${NC}"
+run_command "sudo -u postgres psql -c \"DROP DATABASE IF EXISTS $DB_NAME;\"" "Database deletion"
+run_command "sudo -u postgres psql -c \"DROP USER IF EXISTS $DB_USER;\"" "Database user deletion"
 
-# 6. Stop PostgreSQL/MySQL (if exists)
-echo "🗄️ Stopping database services..."
-systemctl stop postgresql 2>/dev/null || true
-systemctl stop mysql 2>/dev/null || true
-systemctl disable postgresql 2>/dev/null || true
-systemctl disable mysql 2>/dev/null || true
+# Clear Redis data
+echo -e "${BLUE}🔄 Clearing Redis data...${NC}"
+run_command "redis-cli FLUSHALL" "Redis data clear"
 
-# 7. Remove database data
-echo "🗑️ Removing database data..."
-rm -rf /var/lib/postgresql 2>/dev/null || true
-rm -rf /var/lib/mysql 2>/dev/null || true
+# Remove project directory
+echo -e "${BLUE}🔄 Removing project directory...${NC}"
+run_command "sudo rm -rf $PROJECT_PATH" "Project directory removal"
 
-# 8. Remove project directory completely
-echo "📁 Removing project directory..."
-rm -rf /var/www/win5x 2>/dev/null || true
-rm -rf /var/www/kart 2>/dev/null || true
+# Remove logs
+echo -e "${BLUE}🔄 Removing logs...${NC}"
+run_command "sudo rm -rf /var/log/win5x*" "Win5x logs removal"
+run_command "sudo rm -rf /tmp/win5x-*" "Temporary files removal"
 
-# 9. Remove logs
-echo "📝 Removing logs..."
-rm -rf /var/log/win5x* 2>/dev/null || true
-rm -rf /var/log/kart* 2>/dev/null || true
-rm -rf /var/www/win5x/logs 2>/dev/null || true
-rm -rf /var/www/kart/logs 2>/dev/null || true
+# Remove PM2 configuration
+echo -e "${BLUE}🔄 Removing PM2 configuration...${NC}"
+run_command "rm -rf ~/.pm2" "PM2 configuration removal"
 
-# 10. Remove Node.js and PM2 globally (optional)
-echo "📦 Removing Node.js and PM2..."
-# Uncomment these lines if you want to remove Node.js completely
-# apt-get remove -y nodejs npm 2>/dev/null || true
-# npm uninstall -g pm2 2>/dev/null || true
+# Remove systemd service
+echo -e "${BLUE}🔄 Removing systemd service...${NC}"
+run_command "sudo rm -f /etc/systemd/system/pm2-win5x.service" "PM2 systemd service removal"
+run_command "sudo systemctl daemon-reload" "Systemd daemon reload"
 
-# 11. Remove any remaining processes
-echo "🔍 Killing any remaining processes..."
-pkill -f "win5x" 2>/dev/null || true
-pkill -f "kart" 2>/dev/null || true
-pkill -f "node.*8080" 2>/dev/null || true
-pkill -f "node.*8081" 2>/dev/null || true
-pkill -f "node.*8082" 2>/dev/null || true
+# Remove firewall rules (optional)
+echo -e "${BLUE}🔄 Removing firewall rules...${NC}"
+run_command "sudo ufw delete allow 8080" "User panel firewall rule removal"
+run_command "sudo ufw delete allow 8081" "Admin panel firewall rule removal"
+run_command "sudo ufw delete allow 8082" "Backend API firewall rule removal"
 
-# 12. Clean up system
-echo "🧹 Cleaning up system..."
-apt-get autoremove -y 2>/dev/null || true
-apt-get autoclean 2>/dev/null || true
+# Remove Redis configuration backup
+echo -e "${BLUE}🔄 Removing Redis configuration backup...${NC}"
+run_command "sudo rm -f /etc/redis/redis.conf.backup" "Redis config backup removal"
 
-# 13. Remove any cron jobs
-echo "⏰ Removing cron jobs..."
-crontab -r 2>/dev/null || true
+# Remove any remaining processes
+echo -e "${BLUE}🔄 Killing any remaining processes...${NC}"
+run_command "sudo pkill -f 'win5x'" "Win5x processes kill"
+run_command "sudo pkill -f 'node.*server.js'" "Node server processes kill"
 
-# 14. Remove any systemd services
-echo "🔧 Removing systemd services..."
-rm -f /etc/systemd/system/win5x* 2>/dev/null || true
-rm -f /etc/systemd/system/kart* 2>/dev/null || true
-systemctl daemon-reload 2>/dev/null || true
+# Clean package cache
+echo -e "${BLUE}🔄 Cleaning package cache...${NC}"
+run_command "sudo apt autoremove -y" "Package autoremove"
+run_command "sudo apt autoclean" "Package cache clean"
 
+# Remove any remaining files
+echo -e "${BLUE}🔄 Removing any remaining files...${NC}"
+run_command "sudo find /var/log -name '*win5x*' -delete" "Log files cleanup"
+run_command "sudo find /tmp -name '*win5x*' -delete" "Temporary files cleanup"
+run_command "sudo find /home -name '*win5x*' -delete" "Home directory cleanup"
+
+# Restart services
+echo -e "${BLUE}🔄 Restarting services...${NC}"
+run_command "sudo systemctl start postgresql" "PostgreSQL service start"
+run_command "sudo systemctl start redis-server" "Redis service start"
+run_command "sudo systemctl start nginx" "Nginx service start"
+
+# Final cleanup check
+echo -e "${BLUE}🔄 Final cleanup check...${NC}"
+echo -e "${CYAN}Checking for remaining files...${NC}"
+
+# Check for remaining files
+if [ -d "$PROJECT_PATH" ]; then
+    echo -e "${RED}❌ Project directory still exists: $PROJECT_PATH${NC}"
+else
+    echo -e "${GREEN}✅ Project directory removed${NC}"
+fi
+
+if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+    echo -e "${RED}❌ Database still exists: $DB_NAME${NC}"
+else
+    echo -e "${GREEN}✅ Database removed${NC}"
+fi
+
+if pm2 list | grep -q "win5x"; then
+    echo -e "${RED}❌ PM2 processes still exist${NC}"
+else
+    echo -e "${GREEN}✅ PM2 processes removed${NC}"
+fi
+
+if [ -f "/etc/nginx/sites-available/win5x" ]; then
+    echo -e "${RED}❌ Nginx configuration still exists${NC}"
+else
+    echo -e "${GREEN}✅ Nginx configuration removed${NC}"
+fi
+
+# Display final information
 echo ""
-echo "✅ COMPLETE CLEANUP FINISHED!"
+echo -e "${CYAN}===============================================${NC}"
+echo -e "${GREEN}🎉 Win5x Complete Cleanup Finished!${NC}"
+echo -e "${CYAN}===============================================${NC}"
 echo ""
-echo "Everything has been removed:"
-echo "   ✅ PM2 processes and configuration"
-echo "   ✅ Nginx configuration"
-echo "   ✅ Database services and data"
-echo "   ✅ Redis data"
-echo "   ✅ Project files"
-echo "   ✅ Logs"
-echo "   ✅ System cleanup"
+echo -e "${YELLOW}📋 Cleanup Summary:${NC}"
+echo -e "• PM2 processes: Deleted"
+echo -e "• Database: Deleted"
+echo -e "• Project files: Deleted"
+echo -e "• Nginx configuration: Removed"
+echo -e "• Redis data: Cleared"
+echo -e "• Logs: Removed"
+echo -e "• Services: Restarted"
 echo ""
-echo "Server is now completely clean and ready for fresh setup!"
+echo -e "${YELLOW}🔧 Services Status:${NC}"
+echo -e "• PostgreSQL: $(sudo systemctl is-active postgresql)"
+echo -e "• Redis: $(sudo systemctl is-active redis-server)"
+echo -e "• Nginx: $(sudo systemctl is-active nginx)"
 echo ""
-echo "To start fresh setup, run:"
-echo "   git clone <your-repo-url> /var/www/win5x"
-echo "   cd /var/www/win5x"
-echo "   ./fresh-server-setup.sh"
+echo -e "${RED}⚠️  Important Notes:${NC}"
+echo -e "• All Win5x data has been permanently deleted"
+echo -e "• Services have been restarted"
+echo -e "• System is clean and ready for fresh installation"
+echo ""
+echo -e "${CYAN}===============================================${NC}"
