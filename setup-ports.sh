@@ -1,84 +1,22 @@
 #!/bin/bash
 
-# Fix TypeScript and Backend Build Issues
+# Win5x Port Setup Script
+# Sets up proper port configuration: 8080 user, 8081 admin, 8082 backend
+
 echo "========================================="
-echo "    Fix TypeScript and Backend Issues"
+echo "    Win5x Port Setup Script"
 echo "========================================="
 echo
 
 cd /var/www/kart
 
-echo "🔧 Step 1: Installing TypeScript globally..."
-npm install -g typescript
-echo "✅ TypeScript installed globally"
-echo
-
-echo "🔧 Step 2: Installing development dependencies..."
-pnpm install
-echo "✅ Development dependencies installed"
-echo
-
-echo "🔧 Step 3: Checking if backend dist exists..."
-if [ -d "packages/backend/dist" ]; then
-    echo "✅ Backend dist directory exists"
-    ls -la packages/backend/dist/
-else
-    echo "❌ Backend dist directory missing"
-fi
-echo
-
-echo "🔧 Step 4: Building backend specifically..."
-cd packages/backend
-echo "Current directory: $(pwd)"
-echo "Checking package.json..."
-cat package.json | grep -A 5 -B 5 "build"
-
-echo "Running backend build..."
-pnpm run build
-echo "✅ Backend build completed"
-echo
-
-echo "🔧 Step 5: Verifying backend build..."
-if [ -f "dist/server.js" ]; then
-    echo "✅ Backend dist/server.js exists"
-    ls -la dist/
-else
-    echo "❌ Backend dist/server.js still missing"
-    echo "Checking what files exist in dist/:"
-    ls -la dist/ 2>/dev/null || echo "No dist directory"
-fi
-echo
-
-cd /var/www/kart
-
-echo "🔧 Step 6: Building all packages..."
-pnpm run build
-echo "✅ All packages built"
-echo
-
-echo "🔧 Step 7: Checking all dist directories..."
-echo "Backend dist:"
-ls -la packages/backend/dist/ 2>/dev/null || echo "Backend dist missing"
-
-echo "Admin dist:"
-ls -la packages/admin/dist/ 2>/dev/null || echo "Admin dist missing"
-
-echo "User dist:"
-ls -la packages/user/dist/ 2>/dev/null || echo "User dist missing"
-echo
-
-echo "🔧 Step 8: Stopping all services and fixing ports..."
+echo "🔧 Step 1: Stopping all services..."
 pm2 delete all 2>/dev/null || true
 pkill -f "serve.*packages" 2>/dev/null || true
-
-# Check what's using port 8080
-echo "Checking what's using port 8080:"
-netstat -tlnp | grep :8080 || echo "Port 8080 is free"
+echo "✅ All services stopped"
 echo
 
-echo "🔧 Step 9: Starting services with correct configuration..."
-
-# Update ecosystem config to use different ports if needed
+echo "🔧 Step 2: Updating ecosystem configuration..."
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [
@@ -142,39 +80,16 @@ module.exports = {
   ]
 };
 EOF
-
-echo "✅ Ecosystem config updated (user frontend now on port 8082)"
+echo "✅ Ecosystem configuration updated"
 echo
 
-echo "🔧 Step 10: Starting PM2 services..."
-pm2 start ecosystem.config.js
-pm2 save
-echo "✅ PM2 services started"
-echo
-
-echo "🔧 Step 11: Checking service status..."
-sleep 3
-pm2 status
-echo
-
-echo "🔧 Step 12: Checking if services are listening..."
-echo "Backend (port 8082):"
-netstat -tlnp | grep :8082 || echo "❌ Backend not listening"
-
-echo "Admin frontend (port 8081):"
-netstat -tlnp | grep :8081 || echo "❌ Admin not listening"
-
-echo "User frontend (port 8080):"
-netstat -tlnp | grep :8080 || echo "❌ User not listening"
-echo
-
-echo "🔧 Step 13: Updating Nginx configuration..."
+echo "🔧 Step 3: Updating Nginx configuration..."
 cat > /etc/nginx/sites-available/win5x << 'EOF'
 server {
     listen 80;
     server_name 217.148.142.91;
 
-    # User frontend
+    # User frontend - Port 8080
     location / {
         proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
@@ -187,7 +102,7 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Admin panel
+    # Admin panel - Port 8081
     location /admin {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
@@ -200,7 +115,7 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Backend API
+    # Backend API - Port 8082
     location /api {
         proxy_pass http://localhost:8082;
         proxy_http_version 1.1;
@@ -215,23 +130,53 @@ server {
 }
 EOF
 
+# Enable the site
+ln -sf /etc/nginx/sites-available/win5x /etc/nginx/sites-enabled/
+
 # Test and reload nginx
 nginx -t && systemctl reload nginx
 echo "✅ Nginx configuration updated"
 echo
 
-echo "🔧 Step 14: Testing all endpoints..."
-echo "Testing backend API:"
+echo "🔧 Step 4: Creating logs directory..."
+mkdir -p logs
+echo "✅ Logs directory created"
+echo
+
+echo "🔧 Step 5: Starting PM2 services..."
+pm2 start ecosystem.config.js
+pm2 save
+echo "✅ PM2 services started"
+echo
+
+echo "🔧 Step 6: Checking service status..."
+sleep 3
+pm2 status
+echo
+
+echo "🔧 Step 7: Verifying port configuration..."
+echo "Backend (port 8082):"
+netstat -tlnp | grep :8082 || echo "❌ Backend not listening"
+
+echo "Admin frontend (port 8081):"
+netstat -tlnp | grep :8081 || echo "❌ Admin not listening"
+
+echo "User frontend (port 8080):"
+netstat -tlnp | grep :8080 || echo "❌ User not listening"
+echo
+
+echo "🔧 Step 8: Testing endpoints..."
+echo "Testing backend API (port 8082):"
 curl -s -I http://localhost:8082/ | head -1 || echo "❌ Backend not responding"
 
-echo "Testing user frontend:"
+echo "Testing user frontend (port 8080):"
 curl -s -I http://localhost:8080/ | head -1 || echo "❌ User frontend not responding"
 
-echo "Testing admin frontend:"
+echo "Testing admin frontend (port 8081):"
 curl -s -I http://localhost:8081/ | head -1 || echo "❌ Admin frontend not responding"
 echo
 
-echo "🔧 Step 15: Testing through Nginx..."
+echo "🔧 Step 9: Testing through Nginx..."
 echo "Testing main site:"
 curl -s -I http://localhost/ | head -1 || echo "❌ Main site not responding"
 
@@ -243,18 +188,20 @@ curl -s -I http://localhost/api/ | head -1 || echo "❌ API not responding"
 echo
 
 echo "========================================="
-echo "✅ TypeScript and Backend fix completed!"
+echo "✅ Port setup completed!"
 echo "========================================="
 echo
-echo "🌐 Your application should now be accessible at:"
+echo "🌐 Port Configuration:"
+echo "   User Frontend: Port 8080"
+echo "   Admin Panel:   Port 8081"
+echo "   Backend API:   Port 8082"
+echo
+echo "🌐 Application URLs:"
 echo "   Main Site: http://217.148.142.91"
 echo "   Admin Panel: http://217.148.142.91/admin"
 echo "   API: http://217.148.142.91/api"
 echo
-echo "📊 Service Status:"
-pm2 status
-echo
-echo "📝 If backend still fails, check logs:"
-echo "   pm2 logs win5x-backend"
-echo "   tail -f /var/www/kart/logs/backend-error.log"
+echo "📊 To monitor services:"
+echo "   pm2 status"
+echo "   pm2 logs"
 echo
