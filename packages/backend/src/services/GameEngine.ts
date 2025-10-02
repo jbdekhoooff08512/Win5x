@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { GameRound, GameRoundStatus, Bet, BetStatus } from '@prisma/client';
+import { GameRound, GameRoundStatus, Bet, BetStatus } from '@prisma/client';
 import { RedisService } from './RedisService';
 // ReferralService removed - using direct database calls
 import { ConfigService } from './ConfigService';
