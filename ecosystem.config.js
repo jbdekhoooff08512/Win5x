@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'win5x-backend',
-      script: './packages/backend/dist/index.js',
+      script: './packages/backend/dist/server.js',
       cwd: '/var/www/kart',
       instances: 1,
       exec_mode: 'fork',
