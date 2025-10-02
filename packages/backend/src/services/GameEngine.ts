@@ -1114,7 +1114,7 @@ export class GameEngine extends EventEmitter {
       numberDistribution[i.toString()] = 0;
     }
 
-    bets.forEach(bet => {
+    bets.forEach((bet: any) => {
       if (bet.betType === 'NUMBER') {
         const betValue = JSON.parse(bet.betValue);
         if (typeof betValue === 'number' && betValue >= 0 && betValue <= 9) {

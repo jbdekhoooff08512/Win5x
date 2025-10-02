@@ -839,7 +839,7 @@ router.get('/leaderboard', asyncHandler(async (req: AuthenticatedRequest, res) =
     .slice(0, 1000);
 
   // Fetch usernames for top entries and current user
-  const topUserIds = sorted.slice(0, 200).map(x => x.userId);
+  const topUserIds = sorted.slice(0, 200).map((x: any) => x.userId);
   const users = await prisma.user.findMany({ where: { id: { in: topUserIds } }, select: { id: true, username: true } });
   const idToName: Record<string, string> = Object.fromEntries(users.map((u: any) => [u.id, u.username]));
 
