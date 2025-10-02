@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/admin/',  // Important for serving under /admin/
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
