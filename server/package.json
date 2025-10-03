@@ -1,0 +1,16 @@
+{
+  "name": "win5x-server",
+  "version": "1.0.0",
+  "description": "Win5x Server Build Package",
+  "main": "backend/src/server.ts",
+  "scripts": {
+    "start": "cd backend && node dist/server.js",
+    "build": "cd backend && npm run build",
+    "dev": "cd backend && npm run dev",
+    "install-deps": "cd backend && npm install"
+  },
+  "keywords": ["win5x", "server", "build"],
+  "author": "Win5x Team",
+  "license": "MIT"
+}
+

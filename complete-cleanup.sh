@@ -15,7 +15,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_PATH="${PROJECT_PATH:-/var/www/kart}"
+PROJECT_PATH="${PROJECT_PATH:-/var/www/win5x}"
 DB_NAME="win5x_db"
 DB_USER="win5x_user"
 
