@@ -100,7 +100,7 @@ const LandingPage: React.FC = () => {
                 Win <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">5x</span> Your Bet
               </h1>
               <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-                Experience the thrill of real-time roulette with the fairest gaming system. 
+                Experience the thrill of real-time wheel spinning with the fairest gaming system. 
                 Place your bets and watch the wheel spin to victory!
               </p>
             </motion.div>
@@ -174,7 +174,7 @@ const LandingPage: React.FC = () => {
               Why Choose Win5x?
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Experience the ultimate roulette gaming platform with cutting-edge features
+              Experience the ultimate wheel spinning gaming platform with cutting-edge features
             </p>
           </motion.div>
 

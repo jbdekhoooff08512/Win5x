@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
             <Gamepad2 className="h-10 w-10 text-white" />
           </motion.div>
           <h2 className="text-4xl font-bold text-white mb-2">Win5x</h2>
-          <p className="text-gold-400 text-lg font-semibold">Roulette Game</p>
+          <p className="text-gold-400 text-lg font-semibold">Spin the Wheel</p>
           <p className="mt-2 text-sm text-gray-400">
             Sign in to start spinning and winning!
           </p>

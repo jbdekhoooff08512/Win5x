@@ -235,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, currentPath, user, onNavi
         {/* Footer */}
         <div className="px-4 py-4 border-t border-gray-700">
           <div className="text-center text-xs text-gray-400">
-            <p>Win5x Roulette</p>
+            <p>Win5x Spin the Wheel</p>
             <p className="mt-1">v1.0.0</p>
           </div>
         </div>
