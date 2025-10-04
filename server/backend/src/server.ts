@@ -39,14 +39,29 @@ const io = new SocketIOServer(server, {
   cors: {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
+      
+      // Allow specific origins in production
+      const allowedOrigins = [
+        'http://217.148.142.91',
+        'https://217.148.142.91',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8080'
+      ];
+      
+      // Add environment origins if set
+      const envOrigins = process.env.CORS_ALLOWED_ORIGINS || '';
+      const envAllowed = envOrigins
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean);
+      
+      const allAllowed = [...allowedOrigins, ...envAllowed];
+      
       if (process.env.NODE_ENV === 'production') {
-        const envOrigins = process.env.CORS_ALLOWED_ORIGINS || '';
-        const allowed = envOrigins
-          .split(',')
-          .map((o) => o.trim())
-          .filter(Boolean);
-        return allowed.includes(origin) ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+        return allAllowed.includes(origin) ? callback(null, true) : callback(new Error('Not allowed by CORS'));
       }
+      
       // In development, allow all origins to support LAN/mobile testing
       return callback(null, true);
     },
@@ -69,14 +84,29 @@ app.use(helmet({
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
+    
+    // Allow specific origins in production
+    const allowedOrigins = [
+      'http://217.148.142.91',
+      'https://217.148.142.91',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:8080'
+    ];
+    
+    // Add environment origins if set
+    const envOrigins = process.env.CORS_ALLOWED_ORIGINS || '';
+    const envAllowed = envOrigins
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    
+    const allAllowed = [...allowedOrigins, ...envAllowed];
+    
     if (process.env.NODE_ENV === 'production') {
-      const envOrigins = process.env.CORS_ALLOWED_ORIGINS || '';
-      const allowed = envOrigins
-        .split(',')
-        .map((o) => o.trim())
-        .filter(Boolean);
-      return allowed.includes(origin) ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+      return allAllowed.includes(origin) ? callback(null, true) : callback(new Error('Not allowed by CORS'));
     }
+    
     // In development, allow all origins to support LAN/mobile testing
     return callback(null, true);
   },

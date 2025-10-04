@@ -236,7 +236,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.11)(typescript@5.9.2)
       typescript:
-        specifier: ^5.9.2
+        specifier: ^5.3.3
         version: 5.9.2
 
   packages/common:
