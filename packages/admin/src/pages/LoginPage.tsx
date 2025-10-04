@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +16,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,6 +32,8 @@ const LoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       await login(data.username, data.password);
+      // Redirect to admin dashboard after successful login
+      navigate('/admin/dashboard');
     } catch (error) {
       // Error is handled by the AuthContext
     } finally {
