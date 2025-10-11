@@ -174,7 +174,7 @@ export class PaymentGatewayService {
       currency: request.currency,
       status: 'pending',
       gatewayOrderId: `mock_order_${paymentId}`,
-      paymentUrl: `${process.env.FRONTEND_URL || 'http://localhost:3002'}/payment/mock?payment_id=${paymentId}`,
+      paymentUrl: `${process.env.FRONTEND_URL || 'https://nymex.store'}/payment/mock?payment_id=${paymentId}`,
       qrCode: `data:image/svg+xml;base64,${Buffer.from(`
         <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
           <rect width="200" height="200" fill="white"/>

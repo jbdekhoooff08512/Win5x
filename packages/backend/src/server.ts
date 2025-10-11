@@ -59,10 +59,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "http://217.148.142.91:8082", "https:", "blob:"],
+      imgSrc: ["'self'", "data:", process.env.FRONTEND_URL || "https://nymex.store", "https:", "blob:"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "ws:", "wss:", "http://217.148.142.91:8082"],
+      connectSrc: ["'self'", "ws:", "wss:", process.env.FRONTEND_URL || "https://nymex.store"],
     },
   },
 }));

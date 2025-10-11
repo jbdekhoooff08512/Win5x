@@ -172,7 +172,7 @@ router.get('/stats', authenticateToken, requireUser, asyncHandler(async (req: Au
   });
 
   // Generate invitation link
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+  const baseUrl = process.env.FRONTEND_URL || 'https://nymex.store';
   const invitationLink = `${baseUrl}/register?ref=${referralCode}`;
 
   const stats = {
@@ -363,7 +363,7 @@ router.get('/link', authenticateToken, requireUser, asyncHandler(async (req: Aut
     });
   }
 
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+  const baseUrl = process.env.FRONTEND_URL || 'https://nymex.store';
   const invitationLink = `${baseUrl}/register?ref=${referralCode}`;
   
   // Generate QR code data (you can use a QR code library here)

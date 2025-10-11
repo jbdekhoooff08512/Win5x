@@ -108,7 +108,7 @@ PORT=3001
 NODE_ENV=production
 
 # CORS
-CORS_ORIGIN="http://localhost:3000"
+CORS_ORIGIN="https://nymex.store"
 
 # File Upload
 MAX_FILE_SIZE=5242880

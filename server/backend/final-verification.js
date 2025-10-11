@@ -1,7 +1,7 @@
 const https = require('https');
 const http = require('http');
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'https://nymex.store';
 
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {

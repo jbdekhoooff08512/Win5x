@@ -42,8 +42,7 @@ const io = new SocketIOServer(server, {
       
       // Allow specific origins in production
       const allowedOrigins = [
-        'http://217.148.142.91',
-        'https://217.148.142.91',
+        'https://nymex.store',
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8080'
@@ -74,10 +73,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "http://217.148.142.91:8082", "https:", "blob:"],
+      imgSrc: ["'self'", "data:", process.env.FRONTEND_URL || "https://nymex.store", "https:", "blob:"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "ws:", "wss:", "http://217.148.142.91:8082"],
+      connectSrc: ["'self'", "ws:", "wss:", process.env.FRONTEND_URL || "https://nymex.store"],
     },
   },
 }));
@@ -87,8 +86,7 @@ app.use(cors({
     
     // Allow specific origins in production
     const allowedOrigins = [
-      'http://217.148.142.91',
-      'https://217.148.142.91',
+      'https://nymex.store',
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:8080'

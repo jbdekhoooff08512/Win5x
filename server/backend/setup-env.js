@@ -16,7 +16,7 @@ NODE_ENV="development"
 PORT=3001
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:3002"
+CORS_ALLOWED_ORIGINS="https://nymex.store,http://localhost:3000,http://localhost:3002"
 
 # Security Configuration
 BCRYPT_ROUNDS=12

@@ -16,11 +16,11 @@ export default defineConfig({
     port: 8081,
     proxy: {
       '/api': {
-        target: process.env.VITE_PROXY_TARGET || 'http://217.148.142.91:8082',
+        target: process.env.VITE_PROXY_TARGET || 'https://nymex.store',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: process.env.VITE_PROXY_TARGET || 'http://217.148.142.91:8082',
+        target: process.env.VITE_PROXY_TARGET || 'https://nymex.store',
         changeOrigin: true,
         ws: true,
       },

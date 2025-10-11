@@ -14,7 +14,8 @@ module.exports = {
         JWT_SECRET: 'your_jwt_secret_key',
         JWT_REFRESH_SECRET: 'your_refresh_secret_key',
         ADMIN_EMAIL: 'admin@win5x.com',
-        ADMIN_PASSWORD: 'admin123'
+        ADMIN_PASSWORD: 'admin123',
+        FRONTEND_URL: 'https://nymex.store'
       },
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',
